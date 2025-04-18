@@ -197,3 +197,34 @@ form > * { width: 100%; }
   font-size: 1.25rem;
   cursor: pointer;
 }
+
+/* … todo seu CSS anterior … */
+
+/* ── Botões no cartão ── */
+.move-btn {
+  position: absolute;
+  top: 5px;
+  right: 65px;       /* junto ao “Editar” */
+  background: #bbb;
+  color: #222;
+  border: none;
+  border-radius: 4px;
+  padding: .25rem .5rem;
+  font-size: .8rem;
+  cursor: grab;
+}
+.move-btn:active {
+  cursor: grabbing;
+}
+.edit-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: #ffc107;
+  border: none;
+  border-radius: 4px;
+  padding: .25rem .5rem;
+  font-size: .8rem;
+  cursor: pointer;
+}
+
