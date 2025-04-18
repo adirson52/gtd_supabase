@@ -102,6 +102,19 @@
     </div>
   </div>
 
+  <!-- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO -->
+<div id="modalExcluir" class="overlay">
+  <div class="read-modal" style="max-width:340px; text-align:center">
+    <h3>Confirmar exclusão?</h3>
+    <p>Essa tarefa será movida para a lista de excluídos.</p>
+    <div style="margin-top:1rem; display:flex; gap:1rem; justify-content:center">
+      <button id="btnCancelarExcluir" class="read-close" style="background:#ccc">Cancelar</button>
+      <button id="btnConfirmarExcluir" class="read-close" style="background:#d32f2f">Excluir</button>
+    </div>
+  </div>
+</div>
+
+
   <!-- libs -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
