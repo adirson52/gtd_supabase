@@ -220,36 +220,37 @@ editForm.addEventListener('submit', async e => {
 /* ========= VER LOG CONCLUÍDAS ========= */
 document.getElementById('btn-concluidas').onclick = async () => {
   const modal = document.getElementById('modal-concluidas');
-  const lista = document.getElementById('lista-concluidas');
+  const tbody = document.querySelector('#table-concluidas tbody');
   modal.style.display = 'block';
-  lista.innerHTML = '<p>Carregando…</p>';
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:8px;">Carregando…</td></tr>';
 
   const { data, error } = await supabase
     .from('concluded')
     .select('*')
     .order('concluded_at', { ascending: false });
   if (error) {
-    lista.innerHTML = '<p>Erro ao carregar.</p>';
+    tbody.innerHTML = `<tr><td colspan="4" style="color:red; padding:8px;">Erro ao carregar.</td></tr>`;
     console.error(error);
     return;
   }
   if (!data.length) {
-    lista.innerHTML = '<p>Nenhuma conclusão ainda.</p>';
+    tbody.innerHTML = `<tr><td colspan="4" style="padding:8px;">Nenhuma conclusão registrada ainda.</td></tr>`;
     return;
   }
-  lista.innerHTML = '';
-  data.forEach(r => {
-    const dt = new Date(r.concluded_at).toLocaleString();
-    lista.insertAdjacentHTML('beforeend', `
-      <div class="card">
-        <div class="title">${r.task}</div>
-        <div class="date">Contexto: ${r.contexto}</div>
-        <div class="date">Resp: ${r.responsavel}</div>
-        <div class="date">Em: ${dt}</div>
-      </div>
-    `);
-  });
+
+  // monta as linhas
+  tbody.innerHTML = data.map(r => {
+    const d = new Date(r.concluded_at).toLocaleString();
+    return `
+      <tr>
+        <td style="padding:8px; border:1px solid #ddd;">${r.task}</td>
+        <td style="padding:8px; border:1px solid #ddd;">${r.contexto || ''}</td>
+        <td style="padding:8px; border:1px solid #ddd;">${r.responsavel || ''}</td>
+        <td style="padding:8px; border:1px solid #ddd;">${d}</td>
+      </tr>`;
+  }).join('');
 };
+
 
 /* ========= START ========= */
 carregar();
