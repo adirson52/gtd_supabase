@@ -74,26 +74,37 @@ form > * { width: 100%; }
   padding-bottom: .5rem;
 }
 .card {
-  /* já existente */
   background: #f1f1f1;
   border-radius: 8px;
   padding: .5rem;
   margin-bottom: .5rem;
   position: relative;
 
-  /* novo: reserva 110px à direita para os botões */
-  padding-right: 110px;
+  /* aumenta o padding à direita pra caber os dois botões */
+  padding-right: 140px;
 }
 
-/* opcional: garante que o título não quebre se for muito longo */
+/* título volta a quebrar linha normalmente, mas com espaço pra direita */
 .card .title {
-  display: block;
-  /* ocupa todo o espaço à esquerda dos botões */
-  width: calc(100% - 110px);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin-right: 140px;
+  white-space: normal;    /* permite wrap */
+  font-weight: 600;
+  margin-bottom: .25rem;
 }
+
+/* reposiciona os botões à direita do cartão */
+.move-btn {
+  position: absolute;
+  top: 8px;
+  right: 75px;  /* ajusta conforme o tamanho real do botão */
+}
+
+.edit-btn {
+  position: absolute;
+  top: 8px;
+  right: 5px;
+}
+
 
 .card .date {
   font-size: .75rem;
