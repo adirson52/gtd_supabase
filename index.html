@@ -2,49 +2,46 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Kanban de Atividades – Freitas</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
   <h1>Kanban de Atividades (Com Edição)</h1>
 
-  <!-- ── FORM NOVA TAREFA ── -->
+  <!-- ── FORM TAREFA ── -->
   <form id="form">
-    <input name="titulo" placeholder="Título" required />
-    <textarea name="descricao" placeholder="Descrição (opcional)"></textarea>
-
-    <select name="status">
+    <input   name="titulo"        placeholder="Título" required/>
+    <textarea name="descricao"    placeholder="Descrição (opcional)"></textarea>
+    <select  name="status">
       <option value="urgente">Urgente</option>
       <option value="nao_iniciado">Não Iniciado</option>
       <option value="em_andamento">Em Andamento</option>
       <option value="com_data">Com Data</option>
       <option value="concluido">Concluído</option>
     </select>
-
-    <input name="tempo_estimado" placeholder="Tempo estimado (mm:ss)" />
-
-    <select name="prioridade">
+    <input   name="tempo_estimado" placeholder="Tempo estimado (mm:ss)"/>
+    <select  name="prioridade">
       <option value="normal">Normal</option>
       <option value="urgente">Urgente</option>
     </select>
-
-    <select name="contexto">
+    <select  name="contexto">
       <option value="Faculdade">Faculdade</option>
       <option value="Trabalho">Trabalho</option>
       <option value="Pessoal">Pessoal</option>
     </select>
-
-    <input name="responsavel" placeholder="Responsável" value="freitas" />
+    <input   name="responsavel"   placeholder="Responsável" value="freitas"/>
     <button>Adicionar Tarefa</button>
   </form>
 
+  <!-- botão Ver Concluídas -->
   <div class="concluidas-wrapper">
     <button id="btn-concluidas">Ver Concluídas</button>
   </div>
 
+  <!-- aviso e quadro -->
   <div id="aviso"></div>
-  <div class="kanban" id="kanban"></div>
+  <div id="kanban" class="kanban"></div>
 
   <!-- ── MODAL LEITURA ── -->
   <div id="readOverlay" class="overlay"></div>
@@ -55,7 +52,7 @@
     <p  id="readPrioridade" class="read-date"></p>
     <p  id="readContexto"   class="read-date"></p>
     <p  id="readResp"       class="read-date"></p>
-    <button id="fecharRead" class="read-close">OK</button>
+    <button id="fecharRead"  class="read-close">OK</button>
   </div>
 
   <!-- ── MODAL EDIÇÃO ── -->
@@ -63,8 +60,8 @@
   <div id="editModal" class="read-modal" style="max-width:380px">
     <h3>Editar Tarefa</h3>
     <form id="editForm">
-      <input type="hidden" name="id" />
-      <input    name="titulo"        placeholder="Título" required />
+      <input type="hidden" name="id"/>
+      <input    name="titulo"        placeholder="Título" required/>
       <textarea name="descricao"     placeholder="Descrição"></textarea>
       <select   name="status">
         <option value="urgente">Urgente</option>
@@ -73,7 +70,7 @@
         <option value="com_data">Com Data</option>
         <option value="concluido">Concluído</option>
       </select>
-      <input    name="tempo_estimado" placeholder="Tempo (mm:ss)" />
+      <input    name="tempo_estimado" placeholder="Tempo (mm:ss)"/>
       <select   name="prioridade">
         <option value="normal">Normal</option>
         <option value="urgente">Urgente</option>
@@ -83,23 +80,33 @@
         <option value="Trabalho">Trabalho</option>
         <option value="Pessoal">Pessoal</option>
       </select>
-      <input    name="responsavel" placeholder="Responsável" />
+      <input    name="responsavel"   placeholder="Responsável"/>
       <button>Salvar</button>
       <button type="button" id="cancelEdit">Cancelar</button>
     </form>
+  </div>
+
+  <!-- ── MODAL CONCLUÍDAS (LOG) ── -->
+  <div id="modal-concluidas" class="overlay">
+    <div class="read-modal" style="max-width:500px;max-height:80vh;overflow:auto">
+      <h3>Tarefas Concluídas (log)</h3>
+      <div id="lista-concluidas"></div>
+      <button onclick="document.getElementById('modal-concluidas').style.display='none'"
+              class="read-close">Fechar</button>
+    </div>
   </div>
 
   <!-- libs -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
+  <!-- supabase client -->
   <script>
-    window.supabase = window.supabase.createClient(
+    window.supabase = supabase.createClient(
       'https://pgbwgsmkngvhygwdjqng.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnYndnc21rbmd2aHlnd2RqcW5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5NDgyNzYsImV4cCI6MjA2MDUyNDI3Nn0.l08904UwxzJjnHDil70hiwekhBEB50NvXInmLFou-Ow'
     );
   </script>
-
   <script src="script.js"></script>
 </body>
 </html>
