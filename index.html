@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kanban de Atividades – Freitas</title>
+  <title>Kanban de Atividades – Freitas</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -11,6 +11,9 @@
 
   <form id="form">
     <input name="titulo" placeholder="Título da tarefa" required />
+
+    <!-- descrição -->
+    <textarea name="descricao" placeholder="Descrição (opcional)"></textarea>
 
     <select name="status">
       <option value="urgente">Urgente</option>
@@ -20,7 +23,8 @@
       <option value="concluido">Concluído</option>
     </select>
 
-    <input name="tempo_estimado" placeholder="Tempo estimado (hh:mm)" />
+    <!-- tempo mm:ss -->
+    <input name="tempo_estimado" placeholder="Tempo estimado (mm:ss)" />
 
     <select name="prioridade">
       <option value="normal">Normal</option>
@@ -44,7 +48,7 @@
   <div id="aviso"></div>
   <div class="kanban" id="kanban"></div>
 
-  <!-- Supabase SDK + client -->
+  <!-- Supabase SDK + client único -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script>
     window.supabase = window.supabase.createClient(
