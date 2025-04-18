@@ -3,15 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Kanban de Atividades – Freitas</title>
+  <title>Kanban de Atividades – Freitas</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <h1>Kanban de Atividades (Com Edição)</h1>
+  <h1>Kanban de Atividades (Com Edição)</h1>
 
+  <!-- ────── FORM ────── -->
   <form id="form">
-    <input name="titulo" placeholder="Título" required />
+    <input name="titulo" placeholder="Título" required/>
     <textarea name="descricao" placeholder="Descrição (opcional)"></textarea>
+
     <select name="status">
       <option value="urgente">Urgente</option>
       <option value="nao_iniciado">Não Iniciado</option>
@@ -19,7 +21,8 @@
       <option value="com_data">Com Data</option>
       <option value="concluido">Concluído</option>
     </select>
-    <input name="tempo_estimado" placeholder="Tempo estimado (mm:ss)" />
+
+    <input name="tempo_estimado" placeholder="Tempo estimado (mm:ss)"/>
     <select name="prioridade">
       <option value="normal">Normal</option>
       <option value="urgente">Urgente</option>
@@ -30,36 +33,35 @@
       <option value="Pessoal">Pessoal</option>
     </select>
     <input name="responsavel" placeholder="Responsável" value="freitas"/>
-    <button type="submit">Adicionar Tarefa</button>
+    <button type="submit">Adicionar Tarefa</button>
   </form>
 
   <div class="concluidas-wrapper">
-    <button id="btn-concluidas">Ver Concluídas</button>
+    <button id="btn-concluidas">Ver Concluídas</button>
   </div>
 
   <div id="aviso"></div>
   <div id="kanban" class="kanban"></div>
 
-  <!-- Leitura -->
-  <div id="readOverlay" class="overlay"></div>
-  <div id="readModal" class="read-modal">
+  <!-- ────── MODAIS / OVERLAYS ────── -->
+  <div id="readOverlay"  class="overlay"></div>
+  <div id="readModal"    class="read-modal">
     <h3 id="readTitulo"></h3>
-    <p id="readDescricao" class="read-desc"></p>
-    <p id="readTempo"     class="read-date"></p>
-    <p id="readPrioridade"class="read-date"></p>
-    <p id="readContexto"  class="read-date"></p>
-    <p id="readResp"      class="read-date"></p>
+    <p  id="readDescricao"  class="read-desc"></p>
+    <p  id="readTempo"      class="read-date"></p>
+    <p  id="readPrioridade" class="read-date"></p>
+    <p  id="readContexto"   class="read-date"></p>
+    <p  id="readResp"       class="read-date"></p>
     <button id="fecharRead" class="read-close">OK</button>
   </div>
 
-  <!-- Edição -->
-  <div id="overlay" class="overlay"></div>
+  <div id="overlay"   class="overlay"></div>
   <div id="editModal" class="read-modal" style="max-width:380px">
-    <h3>Editar Tarefa</h3>
+    <h3>Editar Tarefa</h3>
     <form id="editForm">
       <input type="hidden" name="id"/>
-      <input    name="titulo" placeholder="Título" required/>
-      <textarea name="descricao" placeholder="Descrição"></textarea>
+      <input    name="titulo"        placeholder="Título" required/>
+      <textarea name="descricao"     placeholder="Descrição"></textarea>
       <select   name="status">
         <option value="urgente">Urgente</option>
         <option value="nao_iniciado">Não Iniciado</option>
@@ -77,31 +79,29 @@
         <option value="Trabalho">Trabalho</option>
         <option value="Pessoal">Pessoal</option>
       </select>
-      <input    name="responsavel" placeholder="Responsável"/>
+      <input    name="responsavel"   placeholder="Responsável"/>
       <button type="submit">Salvar</button>
       <button type="button" id="cancelEdit">Cancelar</button>
       <button type="button" id="btn-excluir-modal">Excluir</button>
     </form>
   </div>
 
-  <!-- Concluídas -->
   <div id="modal-concluidas" class="overlay">
     <div class="read-modal" style="max-width:600px;max-height:80vh;overflow:auto">
-      <h3>Tarefas Concluídas (Última Semana)</h3>
+      <h3>Tarefas Concluídas (Última Semana)</h3>
       <table id="table-concluidas">
         <thead>
           <tr><th>Título</th><th>Contexto</th><th>Responsável</th><th>Data</th></tr>
         </thead>
         <tbody></tbody>
       </table>
-      <button onclick="closeConcluidas()" class="read-close">Fechar</button>
+      <button onclick="document.getElementById('modal-concluidas').style.display='none'" class="read-close">Fechar</button>
     </div>
   </div>
 
-  <!-- Confirma Excluir -->
   <div id="modalExcluir" class="overlay">
     <div class="read-modal" style="max-width:340px;text-align:center">
-      <h3>Confirmar exclusão?</h3>
+      <h3>Confirmar exclusão?</h3>
       <p>Será movida para excluídos.</p>
       <div style="display:flex;gap:1rem;justify-content:center;margin-top:1rem">
         <button id="btnCancelarExcluir" class="read-close" style="background:#ccc">Cancelar</button>
@@ -110,27 +110,17 @@
     </div>
   </div>
 
-  <!-- helpers -->
-  <script>
-    function closeConcluidas () {
-      document.getElementById('modal-concluidas').style.display = 'none';
-    }
-  </script>
-
   <!-- libs -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script>
-    /* cria o cliente Supabase – use sua URL e chave */
-    supabase = supabase.createClient(
+    window.supabase = supabase.createClient(
       'https://pgbwgsmkngvhygwdjqng.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnYndnc21rbmd2aHlnd2RqcW5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5NDgyNzYsImV4cCI6MjA2MDUyNDI3Nn0.l08904UwxzJjnHDil70hiwekhBEB50NvXInmLFou-Ow'
     );
   </script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
-  <!-- seu JS principal -->
-  <script src="script.js"></script>
-
+  <!-- JS principal (apenas UMA vez!) -->
   <script src="script.js"></script>
 </body>
 </html>
