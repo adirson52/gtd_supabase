@@ -13,7 +13,6 @@ let tarefaParaExcluir = null; // referência temporária
 
 /* ============= RENDER ============= */
 async function render() {
-  // busca tarefas ordenadas por status e ordem
   const { data: tarefas, error } = await supabase
     .from('todos').select('*')
     .order('status', { ascending: true })
@@ -23,7 +22,6 @@ async function render() {
     return;
   }
 
-  // rótulos de colunas
   const labels = {
     urgente:      'Urgente',
     nao_iniciado: 'Não Iniciado',
@@ -31,68 +29,48 @@ async function render() {
     com_data:     'Com Data',
     concluido:    'Concluído'
   };
-
-  // monta colunas\ n  const kanban = document.getElementById('kanban');
+  const kanban = document.getElementById('kanban');
   kanban.innerHTML = Object.entries(labels)
     .map(([key,label]) => `<div class="column" data-col="${key}"><h2>${label}</h2></div>`)
     .join('');
 
-  // pega os 3 mais recentes em concluído
   const recentIds = tarefas
     .filter(t => t.status === 'concluido')
     .sort((a,b) => new Date(b.moved_at) - new Date(a.moved_at))
     .slice(0,3).map(t => t.id);
 
   tarefas.forEach(t => {
-    // se em concluído, só mostra os top3
     if (t.status === 'concluido' && !recentIds.includes(t.id)) return;
-    const col = kanban.querySelector(`.column[data-col=\"${t.status}\"]`);
+    const col = kanban.querySelector(`.column[data-col="${t.status}"]`);
     if (!col) return;
-
     col.insertAdjacentHTML('beforeend', `
       <div class="card" data-id="${t.id}">
         <div class="title">${t.task}</div>
         ${t.descricao ? `<div class="desc">${t.descricao}</div>` : ''}
         ${t.prioridade ? `<div class="date">Prioridade: ${t.prioridade}</div>` : ''}
-        ${t.contexto ? `<div class="date">Contexto: ${t.contexto}</div>` : ''}
+        ${t.contexto     ? `<div class="date">Contexto: ${t.contexto}</div>` : ''}
         ${t.tempo_estimado ? `<div class="date">Tempo: ${sql2mmss(t.tempo_estimado)}</div>` : ''}
-        ${t.responsavel ? `<div class="date">Resp: ${t.responsavel}</div>` : ''}
+        ${t.responsavel  ? `<div class="date">Resp: ${t.responsavel}</div>`   : ''}
         <button class="move-btn">Move</button>
         <button class="edit-btn">Editar</button>
-        <button class="delete-btn">Excluir</button>
-      </div>
-    `);
+      </div>`);
   });
 
-  // associa eventos aos cards
   kanban.querySelectorAll('.card').forEach(card => {
     const id = card.dataset.id;
     const dados = tarefas.find(x => x.id === id);
 
-    // editar
     card.querySelector('.edit-btn').onclick = e => {
       e.stopPropagation();
       openEdit(dados);
     };
-
-    // leitura ao clicar no corpo do card
     card.onclick = e => {
       if (e.target.classList.contains('move-btn') ||
-          e.target.classList.contains('edit-btn') ||
-          e.target.classList.contains('delete-btn')) return;
+          e.target.classList.contains('edit-btn')) return;
       openRead(dados);
-    };
-
-    // exclusão via modal de confirmação
-    card.querySelector('.delete-btn').onclick = e => {
-      e.stopPropagation();
-      tarefaParaExcluir = dados;
-      show('modalExcluir', true);
-      document.querySelector('#modalExcluir .read-modal').style.display = 'block';
     };
   });
 
-  // inicializa drag & drop
   kanban.querySelectorAll('.column').forEach(col => {
     Sortable.create(col, {
       group: 'kanban',
@@ -108,12 +86,12 @@ async function render() {
             .update({ status: dest, ordem: i, moved_at: new Date().toISOString() })
             .eq('id', id);
           if (dest === 'concluido') {
-            const task = tarefas.find(x => x.id === id);
+            const t = tarefas.find(x => x.id === id);
             await supabase.from('concluded').insert([{
               todo_id: id,
-              task: task.task,
-              contexto: task.contexto,
-              responsavel: task.responsavel
+              task: t.task,
+              contexto: t.contexto,
+              responsavel: t.responsavel
             }]);
           }
         }
@@ -157,52 +135,51 @@ document.getElementById('form').addEventListener('submit', async e => {
 
 /* ============= MODAL LEITURA ============= */
 function openRead(t) {
-  readTitulo.textContent = t.task;
-  readDescricao.textContent = t.descricao || '(sem descrição)';
-  readTempo.textContent = t.tempo_estimado ? 'Tempo: ' + sql2mmss(t.tempo_estimado) : '';
-  readPrioridade.textContent = t.prioridade ? 'Prioridade: ' + t.prioridade : '';
-  readContexto.textContent = t.contexto ? 'Contexto: ' + t.contexto : '';
-  readResp.textContent = 'Resp: ' + (t.responsavel || '-');
+  readTitulo.textContent      = t.task;
+  readDescricao.textContent   = t.descricao || '(sem descrição)';
+  readTempo.textContent       = t.tempo_estimado ? 'Tempo: '+sql2mmss(t.tempo_estimado) : '';
+  readPrioridade.textContent  = t.prioridade   ? 'Prioridade: '+t.prioridade       : '';
+  readContexto.textContent    = t.contexto     ? 'Contexto: '+t.contexto           : '';
+  readResp.textContent        = 'Resp: '+(t.responsavel||'-');
   show('readOverlay'); show('readModal');
 }
-fecharRead.onclick = () => { show('readOverlay', false); show('readModal', false); };
+fecharRead.onclick = () => { show('readOverlay',false); show('readModal',false); };
 
 /* ============= MODAL EDIÇÃO ============= */
 function openEdit(t) {
   const f = editForm;
-  f.id.value = t.id;
-  f.titulo.value = t.task;
-  f.descricao.value = t.descricao || '';
-  f.status.value = t.status;
+  f.id.value             = t.id;
+  f.titulo.value         = t.task;
+  f.descricao.value      = t.descricao || '';
+  f.status.value         = t.status;
   f.tempo_estimado.value = sql2mmss(t.tempo_estimado);
-  f.prioridade.value = t.prioridade || 'normal';
-  f.contexto.value = t.contexto || 'Faculdade';
-  f.responsavel.value = t.responsavel || '';
+  f.prioridade.value     = t.prioridade || 'normal';
+  f.contexto.value       = t.contexto   || 'Faculdade';
+  f.responsavel.value    = t.responsavel|| '';
   show('overlay'); show('editModal');
-
-  // adiciona botão Excluir no modal de edição abaixo do Cancelar
-  let btn = document.getElementById('btn-excluir-modal');
-  if (!btn) {
-    btn = document.createElement('button');
-    btn.id = 'btn-excluir-modal';
-    btn.textContent = 'Excluir';
-    btn.className = 'read-close';
-    btn.style.background = '#d32f2f';
-    btn.style.marginTop = '1rem';
-    btn.style.width = '100%';
-    btn.type = 'button';
-    btn.onclick = () => {
-      tarefaParaExcluir = t;
-      show('modalExcluir', true);
-      document.querySelector('#modalExcluir .read-modal').style.display = 'block';
-    };
-    f.appendChild(btn);
-  }
 }
-cancelEdit.onclick = () => { show('overlay', false); show('editModal', false); };
+cancelEdit.onclick = () => { show('overlay',false); show('editModal',false); };
 
-/* ========== VER CONCLUÍDAS ========= */
-document.getElementById('btn-concluidas').onclick = async () => {
+editForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target;
+  const upd = {
+    task:           f.titulo.value,
+    descricao:      f.descricao.value || null,
+    status:         f.status.value,
+    tempo_estimado: mmss2sql(f.tempo_estimado.value),
+    prioridade:     f.prioridade.value,
+    contexto:       f.contexto.value,
+    responsavel:    f.responsavel.value
+  };
+  const { error } = await supabase.from('todos').update(upd).eq('id', f.id.value);
+  if (error) { toast('Erro ao atualizar'); console.error(error); return; }
+  show('overlay',false); show('editModal',false);
+  toast('Tarefa atualizada!'); render();
+});
+
+/* ========== VER CONCLUÍDAS (últ. semana) ========== */
+document.getElementById('btn-concluidas').addEventListener('click', async () => {
   const modal = document.getElementById('modal-concluidas');
   const inner = modal.querySelector('.read-modal');
   const tbody = document.querySelector('#table-concluidas tbody');
@@ -223,35 +200,14 @@ document.getElementById('btn-concluidas').onclick = async () => {
   }
   tbody.innerHTML = data.map(r => {
     const dt = new Date(r.concluded_at).toLocaleString();
-    return `<tr>
-      <td>${r.task}</td><td>${r.contexto||''}</td><td>${r.responsavel||''}</td><td>${dt}</td>
-    </tr>`;
+    return `<tr><td>${r.task}</td><td>${r.contexto||''}</td><td>${r.responsavel||''}</td><td>${dt}</td></tr>`;
   }).join('');
-};
+});
 
 /* ========= EXCLUSÃO ========= */
 document.getElementById('btnCancelarExcluir').onclick = () => {
-  show('modalExcluir', false);
+  show('modalExcluir',false);
   document.querySelector('#modalExcluir .read-modal').style.display = 'none';
 };
 document.getElementById('btnConfirmarExcluir').onclick = async () => {
-  if (!tarefaParaExcluir) return;
-  const { error: logError } = await supabase.from('excluidos').insert([{
-    todo_id: tarefaParaExcluir.id,
-    task: tarefaParaExcluir.task,
-    contexto: tarefaParaExcluir.contexto,
-    responsavel: tarefaParaExcluir.responsavel
-  }]);
-  const { error: delError } = await supabase.from('todos').delete().eq('id', tarefaParaExcluir.id);
-  show('modalExcluir', false);
-  document.querySelector('#modalExcluir .read-modal').style.display = 'none';
-  tarefaParaExcluir = null;
-  if (logError || delError) {
-    toast('Erro ao excluir'); console.error(logError || delError);
-  } else {
-    toast('Tarefa excluída!'); render();
-  }
-};
-
-/* ============= START ============= */
-document.addEventListener('DOMContentLoaded', render);
+  if (!t
