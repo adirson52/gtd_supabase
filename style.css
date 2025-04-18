@@ -122,3 +122,12 @@ form > *{width:100%}
   margin-top:1rem;width:100%;padding:.6rem 0;
   background:#007aff;color:#fff;border:none;border-radius:12px;font-weight:600;
 }
+
+/* Ícone de arraste */
+.drag-handle{
+  cursor:grab;
+  font-size:1.2rem;
+  position:absolute;top:4px;left:4px;
+  color:#777;
+}
+.card:active .drag-handle{cursor:grabbing}
