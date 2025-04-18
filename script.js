@@ -152,7 +152,9 @@ editForm.addEventListener('submit', async e=>{
 document.getElementById('btn-concluidas').addEventListener('click', async ()=>{
   const modal = document.getElementById('modal-concluidas');
   const tbody = document.querySelector('#table-concluidas tbody');
-  show('modal-concluidas');
+  // depois
+  show('modal-concluidas');                  // overlay
+  show('modal-concluidas').querySelector('.read-modal').style.display = 'block';
 
   tbody.innerHTML = `<tr><td colspan="4" style="text-align:center">Carregando…</td></tr>`;
   const dt = new Date(); dt.setDate(dt.getDate()-7);
