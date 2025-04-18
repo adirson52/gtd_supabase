@@ -1,9 +1,11 @@
 /* ========= UTIL ========= */
 let avisoTimer=null;
-const showMsg=m=>{const el=aviso;el.textContent=m;el.style.display='block';
-  clearTimeout(avisoTimer);avisoTimer=setTimeout(()=>el.style.display='none',6e3);}
+const showMsg=m=>{
+  aviso.textContent=m;aviso.style.display='block';
+  clearTimeout(avisoTimer);avisoTimer=setTimeout(()=>aviso.style.display='none',6000);
+};
 const mmss2sql=v=>v&&/^\d{1,2}:\d{2}$/.test(v)?`00:${v.padStart(5,'0')}`:null;
-const sql2mmss=v=>v?v.slice(3):'';           /* 00:mm:ss → mm:ss */
+const sql2mmss=v=>v?v.slice(3):'';          // 00:mm:ss → mm:ss
 
 /* ========= CARREGA ========= */
 async function carregar(){
@@ -19,10 +21,9 @@ async function carregar(){
   });
 
   data.forEach(t=>{
-    const col=document.querySelector(`.column[data-col="${t.status}"]`);if(!col)return;
-    const c=document.createElement('div');c.className='card';c.dataset.id=t.id;
+    const col=document.querySelector(`.column[data-col="${t.status}"]`); if(!col) return;
+    const c=document.createElement('div'); c.className='card'; c.dataset.id=t.id;
     c.innerHTML=`
-      <span class="drag-handle">⋮⋮</span>
       <div class="title">${t.task}</div>
       ${t.descricao?`<div class="desc">${t.descricao}</div>`:''}
       ${t.prioridade?`<div class="date">Prioridade: ${t.prioridade}</div>`:''}
@@ -31,16 +32,22 @@ async function carregar(){
       ${t.responsavel?`<div class="date">Resp: ${t.responsavel}</div>`:''}
       <button class="edit-btn">Editar</button>
     `;
-    c.onclick=e=>{if(e.target.className!=='edit-btn') abrirRead(t);};
-    c.querySelector('.edit-btn').onclick=e=>{e.stopPropagation(); abrirEdit(t);};
+    c.onclick=e=>{ if(e.target.className!=='edit-btn') abrirRead(t); };
+    c.querySelector('.edit-btn').onclick=e=>{ e.stopPropagation(); abrirEdit(t); };
     col.appendChild(c);
   });
 
+  /* drag & drop – só inicia após 1,5 s de press */
+  let isDragging=false;
   document.querySelectorAll('.column').forEach(col=>{
     Sortable.create(col,{
-      group:'kanban',handle:'.drag-handle',animation:150,
-      delayOnTouchOnly:true,delay:200,filter:'h2',
-      onEnd:async evt=>{
+      group:'kanban',
+      animation:150,
+      delay:1500,
+      delayOnTouchOnly:false,     // aplica também a mouse
+      filter:'h2',
+      onStart:()=>{isDragging=true;},
+      onEnd: async evt=>{
         const destino=evt.to.dataset.col;
         const cards=[...evt.to.querySelectorAll('.card')];
         for(let i=0;i<cards.length;i++){
@@ -48,10 +55,16 @@ async function carregar(){
             .update({ordem:i,status:destino,moved_at:new Date().toISOString()})
             .eq('id',cards[i].dataset.id);
         }
+        isDragging=false;
         showMsg('Tarefa movida!');
       }
     });
   });
+
+  /* impede click após drag */
+  kanban.addEventListener('click',e=>{
+    if(isDragging) e.stopPropagation();
+  },true);
 }
 
 /* ========= NOVA ========= */
