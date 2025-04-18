@@ -2,12 +2,13 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Kamban Adpatado</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Kamban Adaptado</title>Kamban Adaptado</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
-  <h1>Lista Atividades</h1>
+<body data-theme="">
+  <h1>Lista de Atividades</h1>
+
   <!-- Botão Tema Claro/Escuro -->
   <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema">🌙</button>
 
@@ -30,7 +31,7 @@
       <option value="urgente">Urgente</option>
     </select>
     <select name="contexto">
-      <option value="Faculdade">Estagio</option>
+      <option value="Faculdade">Estágio</option>
       <option value="Trabalho">Pecege</option>
       <option value="Pessoal">Monitoria</option>
       <option value="Faculdade">Vagas</option>
@@ -100,7 +101,7 @@
         </thead>
         <tbody></tbody>
       </table>
-      <button onclick="document.getElementById('modal-concluidas').style.display='none'" class="read-close">Fechar</button>
+      <button onclick="closeConcluidas()" class="read-close">Fechar</button>
     </div>
   </div>
 
@@ -129,4 +130,27 @@
 
   <!-- seu JS -->
   <script src="script.js"></script>
+
+  <!-- Toggle Theme Script -->
+  <script>
+    const btn = document.getElementById('theme-toggle');
+    const root = document.body;
+    const saved = localStorage.getItem('theme');
+    if (saved) root.setAttribute('data-theme', saved);
+    else if (window.matchMedia('(prefers-color-scheme: dark)').matches) root.setAttribute('data-theme','dark');
+    
+    function updateIcon() {
+      btn.textContent = root.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
+    }
+    updateIcon();
+    
+    btn.onclick = () => {
+      const theme = root.getAttribute('data-theme') === 'dark' ? '' : 'dark';
+      root.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+      updateIcon();
+    };
+  </script>
+</body>
 </html>
+
