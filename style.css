@@ -106,3 +106,21 @@ form>*{width:100%}
 }
 #table-concluidas thead{background:#ddd;font-weight:bold}
 #table-concluidas tbody tr:nth-child(even){background:#f5f5f5}
+
+/* Botão Excluir */
+.delete-btn {
+  position: absolute;
+  top: 5px;
+  right: 105px;  /* Ajuste se necessário para não sobrepor */
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: .25rem .5rem;
+  font-size: .8rem;
+  cursor: pointer;
+}
+.delete-btn:hover {
+  background: #d32f2f;
+}
+
