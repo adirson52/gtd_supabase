@@ -4,13 +4,14 @@ const toast = msg => { const el=document.getElementById('aviso'); el.textContent
 const mmss2sql = v => v && /^\d{1,2}:\d{2}$/.test(v) ? '00:'+v.padStart(5,'0') : null;
 const sql2mmss = v => v ? v.slice(3) : '';
 
+let tarefaParaExcluir = null; // referência temporária
+
 /* ============= RENDER ============= */
 async function render() {
   const { data:tarefas } = await supabase
     .from('todos').select('*')
     .order('status').order('ordem');
 
-  /* labels & colunas */
   const labels = {
     urgente:'Urgente', nao_iniciado:'Não Iniciado',
     em_andamento:'Em Andamento', com_data:'Com Data', concluido:'Concluído'
@@ -20,7 +21,6 @@ async function render() {
     .map(([k,l]) => `<div class="column" data-col="${k}"><h2>${l}</h2></div>`)
     .join('');
 
-  /* só 3 mais recentes em “concluído” */
   const recentes = tarefas.filter(t=>t.status==='concluido')
         .sort((a,b)=>new Date(b.moved_at)-new Date(a.moved_at)).slice(0,3).map(t=>t.id);
 
@@ -38,10 +38,10 @@ async function render() {
         ${t.responsavel? `<div class="date">Resp: ${t.responsavel}</div>`:''}
         <button class="move-btn">Move</button>
         <button class="edit-btn">Editar</button>
+        <button class="delete-btn" style="position:absolute;top:5px;right:115px;background:#ef5350;color:#fff;border:none;border-radius:4px;padding:.25rem .5rem;font-size:.8rem;cursor:pointer">Excluir</button>
       </div>`);
   });
 
-  /* eventos clique & drag */
   kanban.querySelectorAll('.card').forEach(card=>{
     const id = card.dataset.id;
     const dados = tarefas.find(x=>x.id===id);
@@ -53,9 +53,13 @@ async function render() {
       if(e.target.classList.contains('move-btn')||e.target.classList.contains('edit-btn')) return;
       openRead(dados);
     };
+    card.querySelector('.delete-btn').onclick = e => {
+      e.stopPropagation();
+      tarefaParaExcluir = dados;
+      show('modalExcluir');
+    };
   });
 
-  /* drag via Move */
   kanban.querySelectorAll('.column').forEach(col=>{
     Sortable.create(col,{
       group:'kanban', animation:150,
@@ -68,7 +72,6 @@ async function render() {
           await supabase.from('todos')
             .update({ status:dest, ordem:i, moved_at:new Date().toISOString() })
             .eq('id',id);
-          /* se foi para concluído: log */
           if(dest==='concluido'){
             const t = tarefas.find(x=>x.id===id);
             await supabase.from('concluded').insert([{
@@ -148,24 +151,17 @@ editForm.addEventListener('submit', async e=>{
   toast('Tarefa atualizada!'); render();
 });
 
-/* ========== VER CONCLUÍDAS (últ. semana) ========== */
+/* ========== VER CONCLUÍDAS (últ. semana) ========== */
 document.getElementById('btn-concluidas').addEventListener('click', async () => {
-  // elementos‑chave
-  const modal = document.getElementById('modal-concluidas');      // overlay
-  const inner = modal.querySelector('.read-modal');               // janela branca
+  const modal = document.getElementById('modal-concluidas');
+  const inner = modal.querySelector('.read-modal');
   const tbody = document.querySelector('#table-concluidas tbody');
 
-  /* —— mostra o modal —— */
-  modal.style.display = 'block';      // overlay esmaece o fundo
-  inner.style.display = 'block';      // janela interna aparece
+  modal.style.display = 'block';
+  inner.style.display = 'block';
 
-  /* placeholder enquanto busca */
-  tbody.innerHTML =
-    `<tr><td colspan="4" style="text-align:center">Carregando…</td></tr>`;
-
-  /* pega somente os últimos 7 dias */
-  const limite = new Date();
-  limite.setDate(limite.getDate() - 7);
+  tbody.innerHTML = `<tr><td colspan="4" style="text-align:center">Carregando…</td></tr>`;
+  const limite = new Date(); limite.setDate(limite.getDate() - 7);
 
   const { data, error } = await supabase
     .from('concluded')
@@ -173,20 +169,16 @@ document.getElementById('btn-concluidas').addEventListener('click', async () => 
     .gte('concluded_at', limite.toISOString())
     .order('concluded_at', { ascending: false });
 
-  /* trata erro / vazio */
   if (error) {
-    tbody.innerHTML =
-      `<tr><td colspan="4" style="color:red">Erro: ${error.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" style="color:red">Erro: ${error.message}</td></tr>`;
     console.error(error);
     return;
   }
   if (!data.length) {
-    tbody.innerHTML =
-      `<tr><td colspan="4">Nenhuma tarefa concluída na última semana.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4">Nenhuma tarefa concluída na última semana.</td></tr>`;
     return;
   }
 
-  /* preenche linhas */
   tbody.innerHTML = data.map(r => {
     const dt = new Date(r.concluded_at).toLocaleString();
     return `
@@ -199,6 +191,30 @@ document.getElementById('btn-concluidas').addEventListener('click', async () => 
   }).join('');
 });
 
+/* ========= EXCLUSÃO ========= */
+document.getElementById('btnCancelarExcluir').onclick = () => show('modalExcluir', false);
+document.getElementById('btnConfirmarExcluir').onclick = async () => {
+  if (!tarefaParaExcluir) return;
+
+  const { error: logError } = await supabase.from('excluidos').insert([{
+    todo_id: tarefaParaExcluir.id,
+    task: tarefaParaExcluir.task,
+    contexto: tarefaParaExcluir.contexto,
+    responsavel: tarefaParaExcluir.responsavel
+  }]);
+
+  const { error: delError } = await supabase.from('todos').delete().eq('id', tarefaParaExcluir.id);
+
+  show('modalExcluir', false);
+  tarefaParaExcluir = null;
+  if (logError || delError) {
+    toast('Erro ao excluir');
+    console.error(logError || delError);
+  } else {
+    toast('Tarefa excluída!');
+    render();
+  }
+};
 
 /* ============= START ============= */
 document.addEventListener('DOMContentLoaded', render);
