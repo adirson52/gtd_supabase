@@ -138,23 +138,55 @@ $('#editForm').onsubmit=async e=>{
   toast('Tarefa atualizada!');render();
 };
 
-/* ============ VER CONCLUÍDAS ============ */
-$('#btn-concluidas').onclick=async ()=>{
-  const tbody=$('#table-concluidas tbody');
-  show('#modal-concluidas');
-  tbody.innerHTML='<tr><td colspan="4" style="text-align:center">Carregando…</td></tr>';
+/* ============ VER CONCLUÍDAS ============ */
+$('#btn‑concluidas').onclick = async () => {
+  /* overlay + janela interna */
+  const overlay = $('#modal-concluidas');
+  const inner   = overlay.querySelector('.read-modal');
+  show('#modal-concluidas');          // liga o overlay
+  inner.style.display = 'block';      // garante que a janela fique visível
 
-  const since=new Date(Date.now()-7*864e5).toISOString();
-  const {data,error}=await supabase.from('concluded')
-        .select('*').gte('concluded_at',since)
-        .order('concluded_at',{ascending:false});
-  if(error){tbody.innerHTML=`<tr><td colspan="4" style="color:red">${error.message}</td></tr>`;return;}
-  if(!data.length){tbody.innerHTML='<tr><td colspan="4">Nenhuma tarefa concluída.</td></tr>';return;}
+  const tbody = $('#table-concluidas tbody');
+  tbody.innerHTML =
+    '<tr><td colspan="4" style="text-align:center">Carregando…</td></tr>';
 
-  tbody.innerHTML=data.map(r=>`
-    <tr><td>${r.task}</td><td>${r.contexto||''}</td><td>${r.responsavel||''}</td><td>${new Date(r.concluded_at).toLocaleString()}</td></tr>
-  `).join('');
+  /* últimos 7 dias */
+  const since = new Date(Date.now() - 7 * 864e5).toISOString();
+  const { data, error } = await supabase
+    .from('concluded')
+    .select('*')
+    .gte('concluded_at', since)
+    .order('concluded_at', { ascending: false });
+
+  if (error) {
+    tbody.innerHTML =
+      `<tr><td colspan="4" style="color:red">${error.message}</td></tr>`;
+    return;
+  }
+  if (!data.length) {
+    tbody.innerHTML =
+      '<tr><td colspan="4">Nenhuma tarefa concluída na última semana.</td></tr>';
+    return;
+  }
+
+  /* monta as linhas */
+  tbody.innerHTML = data.map(r => `
+    <tr>
+      <td>${r.task}</td>
+      <td>${r.contexto     || ''}</td>
+      <td>${r.responsavel  || ''}</td>
+      <td>${new Date(r.concluded_at).toLocaleString()}</td>
+    </tr>`).join('');
 };
+
+/* fecha a lista de concluídas */
+function closeConcluidas () {
+  const overlay = $('#modal-concluidas');
+  const inner   = overlay.querySelector('.read-modal');
+  show('#modal-concluidas', false);
+  inner.style.display = 'none';
+}
+
 
 /* ============ EXCLUIR ============ */
 $('#btnCancelarExcluir').onclick=()=>show('#modalExcluir',false);
