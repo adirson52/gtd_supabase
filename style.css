@@ -123,11 +123,11 @@ form > *{width:100%}
   background:#007aff;color:#fff;border:none;border-radius:12px;font-weight:600;
 }
 
-/* Ícone de arraste */
+/* handle de arraste */
 .drag-handle{
   cursor:grab;
   font-size:1.2rem;
-  position:absolute;top:4px;left:4px;
-  color:#777;
+  position:absolute;left:4px;top:4px;color:#777;
 }
 .card:active .drag-handle{cursor:grabbing}
+
