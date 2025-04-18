@@ -1,130 +1,20 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Kanban de Atividades – Freitas</title>
-  <link rel="stylesheet" href="style.css"/>
-</head>
-<body>
-  <h1>Kanban de Atividades (Com Edição)</h1>
-
-  <!-- FORMULÁRIO DE TAREFA -->
-  <form id="form">
-    <input   name="titulo"        placeholder="Título" required/>
-    <textarea name="descricao"    placeholder="Descrição (opcional)"></textarea>
-    <select  name="status">
-      <option value="urgente">Urgente</option>
-      <option value="nao_iniciado">Não Iniciado</option>
-      <option value="em_andamento">Em Andamento</option>
-      <option value="com_data">Com Data</option>
-      <option value="concluido">Concluído</option>
-    </select>
-    <input   name="tempo_estimado" placeholder="Tempo estimado (mm:ss)"/>
-    <select  name="prioridade">
-      <option value="normal">Normal</option>
-      <option value="urgente">Urgente</option>
-    </select>
-    <select  name="contexto">
-      <option value="Faculdade">Faculdade</option>
-      <option value="Trabalho">Trabalho</option>
-      <option value="Pessoal">Pessoal</option>
-    </select>
-    <input   name="responsavel"   placeholder="Responsável" value="freitas"/>
-    <button>Adicionar Tarefa</button>
-  </form>
-
-  <!-- botão Ver Concluídas -->
-  <div class="concluidas-wrapper">
-    <button id="btn-concluidas">Ver Concluídas</button>
+<!-- MODAL “VER CONCLUÍDAS” EM TABELA -->
+<div id="modal-concluidas" class="overlay" style="z-index:2000">
+  <div class="read-modal" style="max-width:600px; max-height:80vh; overflow:auto; padding:1rem; position:relative; z-index:2001">
+    <h3>Tarefas Concluídas (Última Semana)</h3>
+    <table id="table-concluidas">
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Contexto</th>
+          <th>Responsável</th>
+          <th>Data de Conclusão</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- será preenchido via JS -->
+      </tbody>
+    </table>
+    <button onclick="modalConcluidasClose()" class="read-close">Fechar</button>
   </div>
-
-  <!-- AVISO E QUADRO KANBAN -->
-  <div id="aviso"></div>
-  <div id="kanban" class="kanban"></div>
-
-  <!-- MODAL DE LEITURA -->
-  <div id="readOverlay" class="overlay"></div>
-  <div id="readModal"   class="read-modal">
-    <h3 id="readTitulo"></h3>
-    <p  id="readDescricao"  class="read-desc"></p>
-    <p  id="readTempo"      class="read-date"></p>
-    <p  id="readPrioridade" class="read-date"></p>
-    <p  id="readContexto"   class="read-date"></p>
-    <p  id="readResp"       class="read-date"></p>
-    <button id="fecharRead"  class="read-close">OK</button>
-  </div>
-
-  <!-- MODAL DE EDIÇÃO -->
-  <div id="overlay"   class="overlay"></div>
-  <div id="editModal" class="read-modal" style="max-width:380px">
-    <h3>Editar Tarefa</h3>
-    <form id="editForm">
-      <input type="hidden" name="id"/>
-      <input    name="titulo"        placeholder="Título" required/>
-      <textarea name="descricao"     placeholder="Descrição"></textarea>
-      <select   name="status">
-        <option value="urgente">Urgente</option>
-        <option value="nao_iniciado">Não Iniciado</option>
-        <option value="em_andamento">Em Andamento</option>
-        <option value="com_data">Com Data</option>
-        <option value="concluido">Concluído</option>
-      </select>
-      <input    name="tempo_estimado" placeholder="Tempo (mm:ss)"/>
-      <select   name="prioridade">
-        <option value="normal">Normal</option>
-        <option value="urgente">Urgente</option>
-      </select>
-      <select   name="contexto">
-        <option value="Faculdade">Faculdade</option>
-        <option value="Trabalho">Trabalho</option>
-        <option value="Pessoal">Pessoal</option>
-      </select>
-      <input    name="responsavel"   placeholder="Responsável"/>
-      <button>Salvar</button>
-      <button type="button" id="cancelEdit">Cancelar</button>
-    </form>
-  </div>
-
-  <!-- MODAL “VER CONCLUÍDAS” EM TABELA -->
-  <div id="modal-concluidas" class="overlay">
-    <div class="read-modal" style="max-width:600px; max-height:80vh; overflow:auto; padding:1rem">
-      <h3>Tarefas Concluídas (Log Completo)</h3>
-      <table id="table-concluidas" style="width:100%; border-collapse: collapse; margin-bottom:1rem;">
-        <thead>
-          <tr style="background:#f0f0f0">
-            <th style="padding:8px; border:1px solid #ddd">Título</th>
-            <th style="padding:8px; border:1px solid #ddd">Contexto</th>
-            <th style="padding:8px; border:1px solid #ddd">Responsável</th>
-            <th style="padding:8px; border:1px solid #ddd">Data de Conclusão</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- preenchido pelo script -->
-        </tbody>
-      </table>
-      <button onclick="modalConcluidasClose()" class="read-close">Fechar</button>
-    </div>
-  </div>
-
-  <!-- funções globais -->
-  <script>
-    function modalConcluidasClose(){
-      document.getElementById('modal-concluidas').style.display = 'none';
-    }
-  </script>
-
-  <!-- libs -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-
-  <!-- inicializa supabase e carrega seu script -->
-  <script>
-    window.supabase = supabase.createClient(
-      'https://pgbwgsmkngvhygwdjqng.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnYndnc21rbmd2aHlnd2RqcW5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5NDgyNzYsImV4cCI6MjA2MDUyNDI3Nn0.l08904UwxzJjnHDil70hiwekhBEB50NvXInmLFou-Ow'
-    );
-  </script>
-  <script src="script.js"></script>
-</body>
-</html>
+</div>
