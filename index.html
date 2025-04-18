@@ -3,13 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kanban de Atividades – Freitas</title>
+  <title>Kanban de Atividades – Freitas</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <h1>Kanban de Atividades (Com Edição)</h1>
 
-  <!-- ───── FORM NOVA TAREFA ───── -->
   <form id="form">
     <input name="titulo" placeholder="Título da tarefa" required />
 
@@ -21,8 +20,6 @@
       <option value="concluido">Concluído</option>
     </select>
 
-    <input name="tags" placeholder="Tags (ex: faculdade;cws)" />
-    <input name="data_limite" placeholder="Data limite (YYYY-MM-DD)" />
     <input name="tempo_estimado" placeholder="Tempo estimado (hh:mm)" />
 
     <select name="prioridade">
@@ -40,18 +37,14 @@
     <button type="submit">Adicionar Tarefa</button>
   </form>
 
-  <!-- Botão de concluídas -->
   <div class="concluidas-wrapper">
     <button id="btn-concluidas">Ver Concluídas</button>
   </div>
 
-  <!-- Aviso e quadro Kanban -->
   <div id="aviso"></div>
   <div class="kanban" id="kanban"></div>
 
-  <!-- (Modais ficaram de fora por enquanto; adicionamos depois se necessário) -->
-
-  <!-- Supabase SDK e client único -->
+  <!-- Supabase SDK + client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script>
     window.supabase = window.supabase.createClient(
@@ -60,7 +53,6 @@
     );
   </script>
 
-  <!-- Script principal -->
   <script src="script.js"></script>
 </body>
 </html>
