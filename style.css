@@ -1,43 +1,40 @@
-/* ---------- VARIÁVEIS DE CORES ---------- */
+/* Variables for theming (Apple‑inspired palette) */
 :root {
-  --bg: #f9f9f9;
-  --fg: #222;
-  --card-bg: #f1f1f1;
-  --column-bg: #fff;
-  --btn-bg: #bbb;
-  --btn-fg: #222;
-  --accent: #007aff;
-  --accent-light: #e0f7fa;
-  --danger: #d32f2f;
-  --overlay-bg: rgba(0, 0, 0, 0.4);
+  --bg: #fff;
+  --text: #000;
+  --column-bg: #f2f2f7;
+  --card-bg: #fff;
+  --primary: #007aff;
+  --primary-text: #fff;
+  --btn-bg: var(--primary);
+  --btn-text: var(--primary-text);
+  --btn-hover: #0060cc;
+  --move-btn-bg: #d1d1d6;
+  --move-btn-text: #000;
+  --overlay-bg: rgba(0,0,0,0.3);
+  --modal-bg: #fff;
+  --concluidas-btn-bg: #f0f0f5;
+  --concluidas-btn-hover: #e5e5eb;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #121212;
-    --fg: #e0e0e0;
-    --card-bg: #1e1e1e;
-    --column-bg: #1a1a1a;
-    --btn-bg: #444;
-    --btn-fg: #e0e0e0;
-    --accent: #0a84ff;
-    --accent-light: #333;
-    --danger: #cf6679;
-    --overlay-bg: rgba(0, 0, 0, 0.7);
+    --bg: #000;
+    --text: #fff;
+    --column-bg: #1c1c1e;
+    --card-bg: #2c2c2e;
+    --primary: #0a84ff;
+    --primary-text: #000;
+    --btn-bg: var(--primary);
+    --btn-text: var(--primary-text);
+    --btn-hover: #0060df;
+    --move-btn-bg: #3a3a3c;
+    --move-btn-text: #fff;
+    --overlay-bg: rgba(0,0,0,0.6);
+    --modal-bg: #2c2c2e;
+    --concluidas-btn-bg: #3a3a3c;
+    --concluidas-btn-hover: #48484a;
   }
-}
-
-body[data-theme="dark"] {
-  --bg: #121212;
-  --fg: #e0e0e0;
-  --card-bg: #1e1e1e;
-  --column-bg: #1a1a1a;
-  --btn-bg: #444;
-  --btn-fg: #e0e0e0;
-  --accent: #0a84ff;
-  --accent-light: #333;
-  --danger: #cf6679;
-  --overlay-bg: rgba(0, 0, 0, 0.7);
 }
 
 /* ---------- GERAL ---------- */
@@ -46,32 +43,13 @@ body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial;
   background: var(--bg);
-  color: var(--fg);
-  transition: background .3s, color .3s;
+  color: var(--text);
 }
-
 h1 {
   margin: 0;
   text-align: center;
   padding: 1rem;
   font-weight: 500;
-}
-
-/* ---------- BOTÃO TEMA ---------- */
-.theme-toggle {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  background: var(--btn-bg);
-  color: var(--btn-fg);
-  border: none;
-  border-radius: 50%;
-  width: 2.5rem;
-  height: 2.5rem;
-  font-size: 1.2rem;
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0,0,0,.2);
-  transition: background .3s, color .3s;
 }
 
 /* ---------- FORMULÁRIO ---------- */
@@ -88,11 +66,27 @@ input, textarea, select, button {
   border: 1px solid #ccc;
   border-radius: 6px;
   background: var(--column-bg);
-  color: var(--fg);
-  transition: background .3s, color .3s;
+  color: var(--text);
 }
 button { cursor: pointer; }
 form > * { width: 100%; }
+
+/* ---------- DARK/LIGHT TOGGLE BUTTON ---------- */
+.theme-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem;
+  font-size: 1.2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+.theme-toggle:hover {
+  background: var(--btn-hover);
+}
 
 /* ---------- BOTÃO CONCLUÍDAS ---------- */
 .concluidas-wrapper {
@@ -103,8 +97,8 @@ form > * { width: 100%; }
 #btn-concluidas {
   display: block;
   width: 100%;
-  background: var(--accent-light);
-  color: var(--accent);
+  background: var(--concluidas-btn-bg);
+  color: var(--text);
   border: none;
   padding: .5rem 1rem;
   border-radius: 6px;
@@ -112,7 +106,9 @@ form > * { width: 100%; }
   box-shadow: 0 2px 4px rgba(0,0,0,.1);
   transition: background .2s;
 }
-#btn-concluidas:hover { background: var(--accent); color: var(--btn-fg); }
+#btn-concluidas:hover {
+  background: var(--concluidas-btn-hover);
+}
 
 /* ---------- KANBAN ---------- */
 .kanban {
@@ -128,12 +124,11 @@ form > * { width: 100%; }
   border-radius: 12px;
   padding: 1rem;
   box-shadow: 0 2px 6px rgba(0,0,0,.1);
-  transition: background .3s;
 }
 .column h2 {
   margin: 0 0 .5rem;
   font-size: 1.2rem;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #ccc;
   padding-bottom: .5rem;
 }
 .card {
@@ -142,7 +137,6 @@ form > * { width: 100%; }
   padding: .5rem;
   margin-bottom: .5rem;
   position: relative;
-  transition: background .3s;
 }
 .card .title {
   font-weight: 600;
@@ -151,40 +145,37 @@ form > * { width: 100%; }
   word-break: break-word;
 }
 .card .desc { font-size: .9rem; margin: .25rem 0; }
-.card .date { font-size: .75rem; color: var(--fg); margin-top: .25rem; }
+.card .date { font-size: .75rem; color: var(--text); margin-top: .25rem; }
 
 /* ---------- BOTÕES NO CARD ---------- */
 .move-btn {
   position: absolute;
   top: 5px;
-  right: 65px;
-  background: var(--btn-bg);
-  color: var(--btn-fg);
+  right: 70px;
+  background: var(--move-btn-bg);
+  color: var(--move-btn-text);
   border: none;
   border-radius: 4px;
   padding: .25rem .5rem;
   font-size: .8rem;
   cursor: grab;
-  transition: background .2s, color .2s;
 }
 .move-btn:active { cursor: grabbing; }
 .edit-btn {
   position: absolute;
   top: 5px;
   right: 5px;
-  background: var(--accent);
-  color: #fff;
+  background: var(--btn-bg);
+  color: var(--btn-text);
   border: none;
   border-radius: 4px;
   padding: .25rem .5rem;
   font-size: .8rem;
   cursor: pointer;
-  transition: background .2s;
 }
-.edit-btn:hover { background: darken(var(--accent), 10%); }
 
 /* ---------- RESPONSIVO ---------- */
-@media (max-width: 640px) {
+@media (max-width:640px) {
   .kanban { flex-wrap: wrap; padding: .5rem; }
   .column { min-width: 100%; margin-bottom: 1rem; }
 }
@@ -194,8 +185,8 @@ form > * { width: 100%; }
   display: none;
   text-align: center;
   padding: 1rem;
-  background: var(--accent-light);
-  color: var(--accent);
+  background: var(--primary);
+  color: var(--primary-text);
   font-weight: 600;
   margin: 1rem auto;
   max-width: 600px;
@@ -215,35 +206,33 @@ form > * { width: 100%; }
   position: fixed;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  background: var(--column-bg);
+  background: var(--modal-bg);
   border-radius: 24px;
   padding: 1.5rem;
   z-index: 951;
   width: 90%; max-width: 360px;
   box-shadow: 0 15px 40px rgba(0,0,0,.25);
-  transition: background .3s, color .3s;
+  color: var(--text);
 }
 .read-modal h3, #editModal h3 {
   margin: 0 0 .75rem;
   font-size: 1.4rem;
   font-weight: 600;
 }
-.read-desc { margin: .25rem 0 1rem; color: var(--fg); line-height: 1.4; }
-.read-date { font-size: .8rem; color: var(--fg); margin: .1rem 0; }
+.read-desc { margin: .25rem 0 1rem; color: var(--text); line-height: 1.4; }
+.read-date { font-size: .8rem; color: var(--text); margin: .1rem 0; }
 .read-close {
   margin-top: 1rem;
   width: 100%;
   padding: .6rem 0;
-  background: var(--accent);
-  color: #fff;
+  background: var(--primary);
+  color: var(--primary-text);
   border: none;
   border-radius: 12px;
   font-weight: 600;
-  transition: background .2s;
 }
-.read-close:hover { background: darken(var(--accent), 10%); }
 
-/* ─── TABELA CONCLUÍDAS ─── */
+/* ---------- TABELA “EXCEL‑LIKE” ---------- */
 #table-concluidas {
   width: 100%;
   border-collapse: collapse;
@@ -255,29 +244,21 @@ form > * { width: 100%; }
   padding: 6px 8px;
   text-align: left;
 }
-#table-concluidas thead {
-  background: #ddd;
-  font-weight: bold;
-}
-#table-concluidas tbody tr:nth-child(even) {
-  background: #f5f5f5;
-}
+#table-concluidas thead { background: #ddd; font-weight: bold; }
+#table-concluidas tbody tr:nth-child(even) { background: #f5f5f5; }
 
-/* ─── BOTÃO EXCLUIR NO MODAL DE EDIÇÃO ─── */
+/* ---------- BOTÃO EXCLUIR NO MODAL DE EDIÇÃO ---------- */
 #btn-excluir-modal {
   display: block;
   margin-top: 1rem;
   width: 100%;
   padding: .6rem 0;
-  background: var(--danger);
+  background: #d32f2f;
   color: #fff;
   border: none;
   border-radius: 12px;
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  transition: background .2s;
 }
-#btn-excluir-modal:hover {
-  background: darken(var(--danger), 10%);
-}
+#btn-excluir-modal:hover { background: #b71c1c; }
