@@ -120,6 +120,45 @@ editForm.addEventListener('submit', async e=>{
   if(error){alert('Erro');console.error(error);return;}
   fecharEd(); showMsg('Tarefa atualizada!'); carregar();
 });
+/* ========= RENDER ========= */
+async function carregar() {
+  /* mesma query … */
 
+  data.forEach(t=>{
+    const col = document.querySelector(`.column[data-col="${t.status}"]`);
+    if (!col) return;
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.id = t.id;
+    card.innerHTML = `
+      <span class="drag-handle">⋮⋮</span>          <!-- NOVO handle -->
+      <div class="title">${t.task}</div>
+      ${t.descricao ? `<div class="desc">${t.descricao}</div>` : ''}
+      ${t.prioridade ? `<div class="date">Prioridade: ${t.prioridade}</div>` : ''}
+      ${t.contexto ? `<div class="date">Contexto: ${t.contexto}</div>` : ''}
+      ${t.tempo_estimado ? `<div class="date">Tempo: ${sql2mmss(t.tempo_estimado)}</div>` : ''}
+      ${t.responsavel ? `<div class="date">Resp: ${t.responsavel}</div>` : ''}
+      <button class="edit-btn">Editar</button>
+    `;
+    /* click handlers iguais … */
+    col.appendChild(card);
+  });
+
+  /* drag & drop com delay e handle */
+  document.querySelectorAll('.column').forEach(col=>{
+    Sortable.create(col,{
+      group:'kanban',
+      animation:150,
+      handle:'.drag-handle',          // ← só move pelo ícone
+      delayOnTouchOnly:true,          // delay só em touch
+      delay:200,                      // 200 ms p/ evitar toques rápidos
+      filter:'h2',
+      onEnd: async evt=>{
+        /* mesma lógica de update status + ordem + moved_at … */
+      }
+    });
+  });
+}
 /* ========= START ========= */
 carregar();
