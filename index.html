@@ -3,26 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Kanban de Atividades – Freitas</title>
+  <title>Kanban de Atividades – Freitas</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <h1>Kanban de Atividades (Com Edição)</h1>
+  <h1>Kanban de Atividades (Com Edição)</h1>
 
-  <!-- ────── FORM ────── -->
   <form id="form">
     <input name="titulo" placeholder="Título" required />
     <textarea name="descricao" placeholder="Descrição (opcional)"></textarea>
-
-    <select  name="status">
+    <select name="status">
       <option value="urgente">Urgente</option>
       <option value="nao_iniciado">Não Iniciado</option>
       <option value="em_andamento">Em Andamento</option>
       <option value="com_data">Com Data</option>
       <option value="concluido">Concluído</option>
     </select>
-
-    <input  name="tempo_estimado" placeholder="Tempo estimado (mm:ss)" />
+    <input name="tempo_estimado" placeholder="Tempo estimado (mm:ss)" />
     <select name="prioridade">
       <option value="normal">Normal</option>
       <option value="urgente">Urgente</option>
@@ -32,39 +29,37 @@
       <option value="Trabalho">Trabalho</option>
       <option value="Pessoal">Pessoal</option>
     </select>
-    <input  name="responsavel" placeholder="Responsável" value="freitas" />
+    <input name="responsavel" placeholder="Responsável" value="freitas"/>
     <button type="submit">Adicionar Tarefa</button>
   </form>
 
-  <!-- Botão Ver Concluídas -->
   <div class="concluidas-wrapper">
     <button id="btn-concluidas">Ver Concluídas</button>
   </div>
 
-  <!-- Avisos + Kanban -->
   <div id="aviso"></div>
   <div id="kanban" class="kanban"></div>
 
-  <!-- ────── MODAL LEITURA ────── -->
+  <!-- Leitura -->
   <div id="readOverlay" class="overlay"></div>
   <div id="readModal" class="read-modal">
     <h3 id="readTitulo"></h3>
-    <p id="readDescricao"  class="read-desc"></p>
-    <p id="readTempo"      class="read-date"></p>
-    <p id="readPrioridade" class="read-date"></p>
-    <p id="readContexto"   class="read-date"></p>
-    <p id="readResp"       class="read-date"></p>
+    <p id="readDescricao" class="read-desc"></p>
+    <p id="readTempo"     class="read-date"></p>
+    <p id="readPrioridade"class="read-date"></p>
+    <p id="readContexto"  class="read-date"></p>
+    <p id="readResp"      class="read-date"></p>
     <button id="fecharRead" class="read-close">OK</button>
   </div>
 
-  <!-- ────── MODAL EDIÇÃO ────── -->
+  <!-- Edição -->
   <div id="overlay" class="overlay"></div>
   <div id="editModal" class="read-modal" style="max-width:380px">
     <h3>Editar Tarefa</h3>
     <form id="editForm">
-      <input type="hidden" name="id" />
-      <input    name="titulo"        placeholder="Título" required/>
-      <textarea name="descricao"     placeholder="Descrição"></textarea>
+      <input type="hidden" name="id"/>
+      <input    name="titulo" placeholder="Título" required/>
+      <textarea name="descricao" placeholder="Descrição"></textarea>
       <select   name="status">
         <option value="urgente">Urgente</option>
         <option value="nao_iniciado">Não Iniciado</option>
@@ -82,15 +77,16 @@
         <option value="Trabalho">Trabalho</option>
         <option value="Pessoal">Pessoal</option>
       </select>
-      <input    name="responsavel"   placeholder="Responsável"/>
+      <input    name="responsavel" placeholder="Responsável"/>
       <button type="submit">Salvar</button>
       <button type="button" id="cancelEdit">Cancelar</button>
+      <button type="button" id="btn-excluir-modal">Excluir</button>
     </form>
   </div>
 
-  <!-- ────── MODAL VER CONCLUÍDAS ────── -->
-  <div id="modal-concluidas" class="overlay" style="z-index:2000">
-    <div class="read-modal" style="max-width:600px;max-height:80vh;overflow:auto;padding:1rem;position:relative;z-index:2001">
+  <!-- Concluídas -->
+  <div id="modal-concluidas" class="overlay">
+    <div class="read-modal" style="max-width:600px;max-height:80vh;overflow:auto">
       <h3>Tarefas Concluídas (Última Semana)</h3>
       <table id="table-concluidas">
         <thead>
@@ -98,36 +94,29 @@
         </thead>
         <tbody></tbody>
       </table>
-      <button onclick="document.getElementById('modal-concluidas').style.display='none'" class="read-close">Fechar</button>
+      <button onclick="closeConcluidas()" class="read-close">Fechar</button>
     </div>
   </div>
 
-<!-- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO -->
-<div id="modalExcluir" class="overlay">
-  <div class="read-modal" style="max-width:340px; text-align:center">
-    <h3>Confirmar exclusão?</h3>
-    <p>Essa tarefa será movida para a lista de excluídos.</p>
-    <div style="margin-top:1rem; display:flex; gap:1rem; justify-content:center">
-      <button id="btnCancelarExcluir" class="read-close" style="background:#ccc">Cancelar</button>
-      <button id="btnConfirmarExcluir" class="read-close" style="background:#d32f2f">Excluir</button>
+  <!-- Confirma Excluir -->
+  <div id="modalExcluir" class="overlay">
+    <div class="read-modal" style="max-width:340px;text-align:center">
+      <h3>Confirmar exclusão?</h3>
+      <p>Será movida para excluídos.</p>
+      <div style="display:flex;gap:1rem;justify-content:center;margin-top:1rem">
+        <button id="btnCancelarExcluir" class="read-close" style="background:#ccc">Cancelar</button>
+        <button id="btnConfirmarExcluir" class="read-close" style="background:#d32f2f">Excluir</button>
+      </div>
     </div>
   </div>
-</div>
 
-
-  <!-- libs -->
+  <script>
+    function closeConcluidas() {
+      document.getElementById('modal-concluidas').style.display = 'none';
+    }
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-
-  <!-- Supabase client global -->
-  <script>
-    window.supabase = supabase.createClient(
-      'https://pgbwgsmkngvhygwdjqng.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnYndnc21rbmd2aHlnd2RqcW5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5NDgyNzYsImV4cCI6MjA2MDUyNDI3Nn0.l08904UwxzJjnHDil70hiwekhBEB50NvXInmLFou-Ow'
-    );
-  </script>
-
-  <!-- seu JS -->
   <script src="script.js"></script>
 </body>
 </html>
