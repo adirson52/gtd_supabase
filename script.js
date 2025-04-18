@@ -1,4 +1,4 @@
-/* =====================  UTILIDADES  ===================== */
+/* ========= UTILIDADES ========= */
 let avisoTimer = null;
 function exibirAviso(msg) {
   const el = document.getElementById('aviso');
@@ -8,7 +8,7 @@ function exibirAviso(msg) {
   avisoTimer = setTimeout(() => (el.style.display = 'none'), 6000);
 }
 
-/* =====================  CARREGA E RENDERIZA  ===================== */
+/* ========= CARREGA E RENDERIZA ========= */
 async function carregarTarefas() {
   try {
     const { data: tarefas, error } = await supabase
@@ -29,16 +29,14 @@ async function carregarTarefas() {
     const kanban = document.getElementById('kanban');
     kanban.innerHTML = '';
 
-    // cria colunas vazias primeiro
     Object.entries(colunas).forEach(([key, label]) => {
-      const div = document.createElement('div');
-      div.className = 'column';
-      div.dataset.col = key;
-      div.innerHTML = `<h2>${label}</h2>`;
-      kanban.appendChild(div);
+      const col = document.createElement('div');
+      col.className = 'column';
+      col.dataset.col = key;
+      col.innerHTML = `<h2>${label}</h2>`;
+      kanban.appendChild(col);
     });
 
-    // adiciona cartões
     tarefas.forEach(t => {
       const coluna = document.querySelector(`.column[data-col="${t.status}"]`);
       if (!coluna) return;
@@ -47,6 +45,7 @@ async function carregarTarefas() {
       card.className = 'card';
       card.innerHTML = `
         <div class="title">${t.task}</div>
+        ${t.descricao ? `<div class="desc">${t.descricao}</div>` : ''}
         ${t.prioridade ? `<div class="date">Prioridade: ${t.prioridade}</div>` : ''}
         ${t.contexto ? `<div class="date">Contexto: ${t.contexto}</div>` : ''}
         ${t.tempo_estimado ? `<div class="date">Tempo: ${t.tempo_estimado}</div>` : ''}
@@ -59,15 +58,25 @@ async function carregarTarefas() {
   }
 }
 
-/* =====================  NOVA TAREFA  ===================== */
+/* ========= NOVA TAREFA ========= */
 document.getElementById('form').addEventListener('submit', async e => {
   e.preventDefault();
   const f = e.target;
 
+  /* converte mm:ss → 00:mm:ss para o tipo time */
+  const bruto = f.tempo_estimado.value.trim();
+  let tempoSql = null;
+  if (bruto) {
+    const ok = /^\d{1,2}:\d{2}$/.test(bruto);
+    if (!ok) return alert('Tempo deve estar no formato mm:ss');
+    tempoSql = `00:${bruto.padStart(5, '0')}`; // 5 => 0m00s
+  }
+
   const nova = {
     task: f.titulo.value,
+    descricao: f.descricao.value || null,
     status: f.status.value,
-    tempo_estimado: f.tempo_estimado.value || null,
+    tempo_estimado: tempoSql,
     prioridade: f.prioridade.value,
     contexto: f.contexto.value,
     responsavel: f.responsavel.value,
@@ -77,7 +86,6 @@ document.getElementById('form').addEventListener('submit', async e => {
   try {
     const { error } = await supabase.from('todos').insert([nova]);
     if (error) throw error;
-
     f.reset();
     exibirAviso('Tarefa salva com sucesso!');
     carregarTarefas();
@@ -87,5 +95,5 @@ document.getElementById('form').addEventListener('submit', async e => {
   }
 });
 
-/* =====================  INICIALIZA  ===================== */
+/* ========= INICIALIZA ========= */
 carregarTarefas();
