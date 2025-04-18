@@ -19,9 +19,8 @@ async function carregar() {
     .select('*')
     .order('status', { ascending: true })
     .order('ordem',  { ascending: true });
-  if (error) { console.error(error); return; }
+  if (error) return console.error(error);
 
-  // montar colunas
   const labels = {
     urgente:      'Urgente',
     nao_iniciado: 'Não Iniciado',
@@ -36,7 +35,6 @@ async function carregar() {
       `<div class="column" data-col="${key}"><h2>${label}</h2></div>`);
   });
 
-  // renderizar cards
   data.forEach(t => {
     const col = document.querySelector(`.column[data-col="${t.status}"]`);
     if (!col) return;
@@ -57,7 +55,7 @@ async function carregar() {
       <button class="edit-btn">Editar</button>
     `;
 
-    // leitura no clique fora do editar/move
+    // abrir leitura se não for clicar em Move ou Editar
     card.addEventListener('click', e => {
       if (e.target.className === 'move-btn' || e.target.className === 'edit-btn')
         return;
@@ -73,24 +71,22 @@ async function carregar() {
     col.appendChild(card);
   });
 
-  // drag & drop apenas pelo handle “Move” (delay 1500ms)
+  // drag & drop imediato ao clicar em "Move"
   let isDragging = false;
   document.querySelectorAll('.column').forEach(col => {
     Sortable.create(col, {
       group: 'kanban',
       animation: 150,
-      handle: '.move-btn',
-      delay: 1500,
-      delayOnTouchOnly: false,
+      handle: '.move-btn',    // só arrasta pelo botão Move
       filter: 'h2',
       onStart: () => { isDragging = true; },
       onEnd: async evt => {
-        const dest = evt.to.dataset.col;
+        const destino = evt.to.dataset.col;
         const cards = Array.from(evt.to.querySelectorAll('.card'));
         for (let i = 0; i < cards.length; i++) {
           await supabase.from('todos')
             .update({
-              status: dest,
+              status: destino,
               ordem: i,
               moved_at: new Date().toISOString()
             })
@@ -102,7 +98,7 @@ async function carregar() {
     });
   });
 
-  // prevenir abrir modal após arrastar
+  // evitar abrir modal após drag
   kanban.addEventListener('click', e => {
     if (isDragging) e.stopPropagation();
   }, true);
@@ -112,8 +108,6 @@ async function carregar() {
 document.getElementById('form').addEventListener('submit', async e => {
   e.preventDefault();
   const f = e.target;
-
-  // calcula próxima ordem na coluna
   const { data: maxRow } = await supabase
     .from('todos')
     .select('ordem')
@@ -144,9 +138,9 @@ document.getElementById('form').addEventListener('submit', async e => {
 
 /* ========= MODAL LEITURA ========= */
 function abrirLeitura(t) {
-  document.getElementById('readTitulo').textContent     = t.task;
-  document.getElementById('readDescricao').textContent = t.descricao || '(sem descrição)';
-  document.getElementById('readTempo').textContent     = t.tempo_estimado
+  document.getElementById('readTitulo').textContent      = t.task;
+  document.getElementById('readDescricao').textContent  = t.descricao || '(sem descrição)';
+  document.getElementById('readTempo').textContent      = t.tempo_estimado
     ? 'Tempo: ' + sql2mmss(t.tempo_estimado)
     : '';
   document.getElementById('readPrioridade').textContent = t.prioridade
