@@ -139,18 +139,16 @@ $('#editForm').onsubmit=async e=>{
 };
 
 /* ============ VER CONCLUÍDAS ============ */
-$('#btn‑concluidas').onclick = async () => {
-  /* overlay + janela interna */
+$('#btn-concluidas').onclick = async () => {          /* <-- corrigido aqui */
   const overlay = $('#modal-concluidas');
   const inner   = overlay.querySelector('.read-modal');
-  show('#modal-concluidas');          // liga o overlay
-  inner.style.display = 'block';      // garante que a janela fique visível
+  show('#modal-concluidas');
+  inner.style.display = 'block';
 
   const tbody = $('#table-concluidas tbody');
   tbody.innerHTML =
     '<tr><td colspan="4" style="text-align:center">Carregando…</td></tr>';
 
-  /* últimos 7 dias */
   const since = new Date(Date.now() - 7 * 864e5).toISOString();
   const { data, error } = await supabase
     .from('concluded')
@@ -169,7 +167,6 @@ $('#btn‑concluidas').onclick = async () => {
     return;
   }
 
-  /* monta as linhas */
   tbody.innerHTML = data.map(r => `
     <tr>
       <td>${r.task}</td>
@@ -186,7 +183,6 @@ function closeConcluidas () {
   show('#modal-concluidas', false);
   inner.style.display = 'none';
 }
-
 
 /* ============ EXCLUIR ============ */
 $('#btnCancelarExcluir').onclick=()=>show('#modalExcluir',false);
