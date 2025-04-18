@@ -148,38 +148,57 @@ editForm.addEventListener('submit', async e=>{
   toast('Tarefa atualizada!'); render();
 });
 
-/* ============= VER CONCLUÍDAS (últ. semana) ============= */
-document.getElementById('btn-concluidas').addEventListener('click', async ()=>{
-  const modal = document.getElementById('modal-concluidas');
+/* ========== VER CONCLUÍDAS (últ. semana) ========== */
+document.getElementById('btn-concluidas').addEventListener('click', async () => {
+  // elementos‑chave
+  const modal = document.getElementById('modal-concluidas');      // overlay
+  const inner = modal.querySelector('.read-modal');               // janela branca
   const tbody = document.querySelector('#table-concluidas tbody');
-  // depois
-  show('modal-concluidas');                  // overlay
-  show('modal-concluidas').querySelector('.read-modal').style.display = 'block';
 
-  tbody.innerHTML = `<tr><td colspan="4" style="text-align:center">Carregando…</td></tr>`;
-  const dt = new Date(); dt.setDate(dt.getDate()-7);
+  /* —— mostra o modal —— */
+  modal.style.display = 'block';      // overlay esmaece o fundo
+  inner.style.display = 'block';      // janela interna aparece
+
+  /* placeholder enquanto busca */
+  tbody.innerHTML =
+    `<tr><td colspan="4" style="text-align:center">Carregando…</td></tr>`;
+
+  /* pega somente os últimos 7 dias */
+  const limite = new Date();
+  limite.setDate(limite.getDate() - 7);
 
   const { data, error } = await supabase
     .from('concluded')
     .select('*')
-    .gte('concluded_at', dt.toISOString())
-    .order('concluded_at',{ascending:false});
+    .gte('concluded_at', limite.toISOString())
+    .order('concluded_at', { ascending: false });
 
-  if(error){
-    tbody.innerHTML = `<tr><td colspan="4" style="color:red">Erro: ${error.message}</td></tr>`;
-    console.error(error); return;
-  }
-  if(!data.length){
-    tbody.innerHTML = `<tr><td colspan="4">Nenhuma tarefa concluída na última semana.</td></tr>`;
+  /* trata erro / vazio */
+  if (error) {
+    tbody.innerHTML =
+      `<tr><td colspan="4" style="color:red">Erro: ${error.message}</td></tr>`;
+    console.error(error);
     return;
   }
-  tbody.innerHTML = data.map(r=>{
-    const d = new Date(r.concluded_at).toLocaleString();
-    return `<tr>
-      <td>${r.task}</td><td>${r.contexto||''}</td>
-      <td>${r.responsavel||''}</td><td>${d}</td></tr>`;
+  if (!data.length) {
+    tbody.innerHTML =
+      `<tr><td colspan="4">Nenhuma tarefa concluída na última semana.</td></tr>`;
+    return;
+  }
+
+  /* preenche linhas */
+  tbody.innerHTML = data.map(r => {
+    const dt = new Date(r.concluded_at).toLocaleString();
+    return `
+      <tr>
+        <td>${r.task}</td>
+        <td>${r.contexto || ''}</td>
+        <td>${r.responsavel || ''}</td>
+        <td>${dt}</td>
+      </tr>`;
   }).join('');
 });
+
 
 /* ============= START ============= */
 document.addEventListener('DOMContentLoaded', render);
