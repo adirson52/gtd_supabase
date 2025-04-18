@@ -110,13 +110,27 @@
     </div>
   </div>
 
+  <!-- helpers -->
   <script>
-    function closeConcluidas() {
+    function closeConcluidas () {
       document.getElementById('modal-concluidas').style.display = 'none';
     }
   </script>
+
+  <!-- libs -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script>
+    /* cria o cliente Supabase – use sua URL e chave */
+    supabase = supabase.createClient(
+      'https://pgbwgsmkngvhygwdjqng.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnYndnc21rbmd2aHlnd2RqcW5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5NDgyNzYsImV4cCI6MjA2MDUyNDI3Nn0.l08904UwxzJjnHDil70hiwekhBEB50NvXInmLFou-Ow'
+    );
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+  <!-- seu JS principal -->
+  <script src="script.js"></script>
+
   <script src="script.js"></script>
 </body>
 </html>
