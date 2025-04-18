@@ -26,23 +26,12 @@ function salvarEdicaoLocal(t) {
 /* =====================  CARREGA E RENDERIZA  ===================== */
 async function carregarTarefas() {
   try {
-    let res = await fetch("/tasks.csv");
-    if (!res.ok) res = await fetch("/public/tasks.csv");
-    if (!res.ok) throw new Error("CSV não encontrado");
+    const { data: tarefas, error } = await supabase
+      .from('todos')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    const texto = await res.text();
-    const linhas = texto.trim().split("\n").slice(1);
-
-    const tarefasCSV = linhas.map((l) => {
-      const campos = l.match(/(".*?"|[^",]+)(?=,|$)/g)?.map((c) => c.replace(/^"|"$/g, "").trim()) || [];
-      while (campos.length < 7) campos.push("");
-      const [id, titulo, descricao, status, tags, data_limite, responsavel] = campos;
-      return { id, titulo, descricao, status, tags, data_limite, responsavel };
-    });
-
-    if (tarefasCSV.length > 0) localStorage.removeItem("tarefasCache");
-    const cache = JSON.parse(localStorage.getItem("tarefasCache") || "[]");
-    const tarefas = tarefasCSV.length ? tarefasCSV : cache;
+    if (error) throw error;
 
     const colunas = {
       urgente: "ASD",
@@ -63,9 +52,10 @@ async function carregarTarefas() {
         const card = document.createElement("div");
         card.className = "card";
         card.innerHTML = `
-          <div class="title">${t.titulo}</div>
-          <div class="tags">${t.tags.split(";").map(tag => `<span class="tag">${tag}</span>`).join("")}</div>
+          <div class="title">${t.task}</div>
+          <div class="tags">${(t.tags || "").split(";").map(tag => `<span class="tag">${tag}</span>`).join("")}</div>
           ${t.data_limite ? `<div class="date">Prazo: ${t.data_limite}</div>` : ""}
+          ${t.responsavel ? `<div class="date">Resp: ${t.responsavel}</div>` : ""}
           <button class="edit-btn">Editar</button>
           <button class="done-btn">Done</button>
         `;
@@ -76,12 +66,15 @@ async function carregarTarefas() {
 
         col.appendChild(card);
       });
+
       kanban.appendChild(col);
     });
+
   } catch (err) {
-    console.error(err);
+    console.error("Erro ao carregar tarefas do Supabase:", err.message);
   }
 }
+
 
 /* =====================  NOVA TAREFA  ===================== */
 document.getElementById("form").addEventListener("submit", async (e) => {
