@@ -1,27 +1,34 @@
 /* ============= UTIL ============= */
-const show = (id, on = true) => document.getElementById(id).style.display = on ? 'block' : 'none';
+const show = (id, on = true) =>
+  document.getElementById(id).style.display = on ? 'block' : 'none';
+
 const toast = msg => {
   const el = document.getElementById('aviso');
   el.textContent = msg;
   show('aviso', true);
   setTimeout(() => show('aviso', false), 4000);
 };
-const mmss2sql = v => v && /^\d{1,2}:\d{2}$/.test(v) ? '00:' + v.padStart(5, '0') : null;
+
+const mmss2sql = v =>
+  v && /^\d{1,2}:\d{2}$/.test(v) ? '00:' + v.padStart(5, '0') : null;
 const sql2mmss = v => v ? v.slice(3) : '';
 
 let tarefaParaExcluir = null; // referência temporária
 
 /* ============= RENDER ============= */
 async function render() {
+  // busca tarefas
   const { data: tarefas, error } = await supabase
     .from('todos').select('*')
     .order('status', { ascending: true })
     .order('ordem',  { ascending: true });
+
   if (error) {
     console.error('Erro ao carregar tarefas:', error.message);
     return;
   }
 
+  // rótulos de colunas
   const labels = {
     urgente:      'Urgente',
     nao_iniciado: 'Não Iniciado',
@@ -29,16 +36,20 @@ async function render() {
     com_data:     'Com Data',
     concluido:    'Concluído'
   };
+
   const kanban = document.getElementById('kanban');
   kanban.innerHTML = Object.entries(labels)
-    .map(([key,label]) => `<div class="column" data-col="${key}"><h2>${label}</h2></div>`)
-    .join('');
+    .map(([key, label]) =>
+      `<div class="column" data-col="${key}"><h2>${label}</h2></div>`
+    ).join('');
 
+  // top3 de concluído
   const recentIds = tarefas
     .filter(t => t.status === 'concluido')
-    .sort((a,b) => new Date(b.moved_at) - new Date(a.moved_at))
-    .slice(0,3).map(t => t.id);
+    .sort((a, b) => new Date(b.moved_at) - new Date(a.moved_at))
+    .slice(0, 3).map(t => t.id);
 
+  // gera cards
   tarefas.forEach(t => {
     if (t.status === 'concluido' && !recentIds.includes(t.id)) return;
     const col = kanban.querySelector(`.column[data-col="${t.status}"]`);
@@ -48,29 +59,37 @@ async function render() {
         <div class="title">${t.task}</div>
         ${t.descricao ? `<div class="desc">${t.descricao}</div>` : ''}
         ${t.prioridade ? `<div class="date">Prioridade: ${t.prioridade}</div>` : ''}
-        ${t.contexto     ? `<div class="date">Contexto: ${t.contexto}</div>` : ''}
-        ${t.tempo_estimado ? `<div class="date">Tempo: ${sql2mmss(t.tempo_estimado)}</div>` : ''}
-        ${t.responsavel  ? `<div class="date">Resp: ${t.responsavel}</div>`   : ''}
+        ${t.contexto   ? `<div class="date">Contexto: ${t.contexto}</div>`   : ''}
+        ${t.tempo_estimado
+           ? `<div class="date">Tempo: ${sql2mmss(t.tempo_estimado)}</div>`
+           : ''}
+        ${t.responsavel? `<div class="date">Resp: ${t.responsavel}</div>`: ''}
         <button class="move-btn">Move</button>
         <button class="edit-btn">Editar</button>
       </div>`);
   });
 
+  // handlers de clique
   kanban.querySelectorAll('.card').forEach(card => {
     const id = card.dataset.id;
     const dados = tarefas.find(x => x.id === id);
 
+    // editar
     card.querySelector('.edit-btn').onclick = e => {
       e.stopPropagation();
       openEdit(dados);
     };
+
+    // leitura
     card.onclick = e => {
       if (e.target.classList.contains('move-btn') ||
-          e.target.classList.contains('edit-btn')) return;
+          e.target.classList.contains('edit-btn'))
+        return;
       openRead(dados);
     };
   });
 
+  // drag & drop
   kanban.querySelectorAll('.column').forEach(col => {
     Sortable.create(col, {
       group: 'kanban',
@@ -107,7 +126,8 @@ document.getElementById('form').addEventListener('submit', async e => {
   e.preventDefault();
   const f = e.target;
   const { data: max } = await supabase.from('todos')
-    .select('ordem').eq('status', f.status.value)
+    .select('ordem')
+    .eq('status', f.status.value)
     .order('ordem', { ascending: false })
     .limit(1).single();
 
@@ -125,7 +145,8 @@ document.getElementById('form').addEventListener('submit', async e => {
 
   const { error } = await supabase.from('todos').insert([nova]);
   if (error) {
-    toast('Erro ao salvar'); console.error(error);
+    toast('Erro ao salvar');
+    console.error(error);
     return;
   }
   f.reset();
@@ -137,13 +158,17 @@ document.getElementById('form').addEventListener('submit', async e => {
 function openRead(t) {
   readTitulo.textContent      = t.task;
   readDescricao.textContent   = t.descricao || '(sem descrição)';
-  readTempo.textContent       = t.tempo_estimado ? 'Tempo: '+sql2mmss(t.tempo_estimado) : '';
-  readPrioridade.textContent  = t.prioridade   ? 'Prioridade: '+t.prioridade       : '';
-  readContexto.textContent    = t.contexto     ? 'Contexto: '+t.contexto           : '';
-  readResp.textContent        = 'Resp: '+(t.responsavel||'-');
-  show('readOverlay'); show('readModal');
+  readTempo.textContent       = t.tempo_estimado ? 'Tempo: ' + sql2mmss(t.tempo_estimado) : '';
+  readPrioridade.textContent  = t.prioridade   ? 'Prioridade: ' + t.prioridade : '';
+  readContexto.textContent    = t.contexto     ? 'Contexto: ' + t.contexto     : '';
+  readResp.textContent        = 'Resp: ' + (t.responsavel || '-');
+  show('readOverlay');
+  show('readModal');
 }
-fecharRead.onclick = () => { show('readOverlay',false); show('readModal',false); };
+fecharRead.onclick = () => {
+  show('readOverlay', false);
+  show('readModal', false);
+};
 
 /* ============= MODAL EDIÇÃO ============= */
 function openEdit(t) {
@@ -155,59 +180,109 @@ function openEdit(t) {
   f.tempo_estimado.value = sql2mmss(t.tempo_estimado);
   f.prioridade.value     = t.prioridade || 'normal';
   f.contexto.value       = t.contexto   || 'Faculdade';
-  f.responsavel.value    = t.responsavel|| '';
-  show('overlay'); show('editModal');
-}
-cancelEdit.onclick = () => { show('overlay',false); show('editModal',false); };
+  f.responsavel.value    = t.responsavel || '';
+  show('overlay');
+  show('editModal');
 
-editForm.addEventListener('submit', async e => {
-  e.preventDefault();
-  const f = e.target;
-  const upd = {
-    task:           f.titulo.value,
-    descricao:      f.descricao.value || null,
-    status:         f.status.value,
-    tempo_estimado: mmss2sql(f.tempo_estimado.value),
-    prioridade:     f.prioridade.value,
-    contexto:       f.contexto.value,
-    responsavel:    f.responsavel.value
-  };
-  const { error } = await supabase.from('todos').update(upd).eq('id', f.id.value);
-  if (error) { toast('Erro ao atualizar'); console.error(error); return; }
-  show('overlay',false); show('editModal',false);
-  toast('Tarefa atualizada!'); render();
-});
+  // botão Excluir dentro do modal de edição
+  if (!document.getElementById('btn-excluir-modal')) {
+    const btn = document.createElement('button');
+    btn.id = 'btn-excluir-modal';
+    btn.type = 'button';
+    btn.textContent = 'Excluir';
+    btn.className = 'read-close';
+    btn.style.background = '#d32f2f';
+    btn.style.marginTop = '1rem';
+    btn.style.width = '100%';
+    btn.onclick = () => {
+      tarefaParaExcluir = t;
+      show('modalExcluir');
+      document.querySelector('#modalExcluir .read-modal').style.display = 'block';
+    };
+    editForm.appendChild(btn);
+  }
+}
+
+cancelEdit.onclick = () => {
+  show('overlay', false);
+  show('editModal', false);
+};
 
 /* ========== VER CONCLUÍDAS (últ. semana) ========== */
-document.getElementById('btn-concluidas').addEventListener('click', async () => {
+document.getElementById('btn-concluidas').onclick = async () => {
   const modal = document.getElementById('modal-concluidas');
   const inner = modal.querySelector('.read-modal');
   const tbody = document.querySelector('#table-concluidas tbody');
-  modal.style.display = 'block'; inner.style.display = 'block';
+
+  modal.style.display = 'block';
+  inner.style.display = 'block';
+
   tbody.innerHTML = `<tr><td colspan="4" style="text-align:center">Carregando…</td></tr>`;
-  const limite = new Date(); limite.setDate(limite.getDate() - 7);
-  const { data, error } = await supabase.from('concluded')
+  const limite = new Date();
+  limite.setDate(limite.getDate() - 7);
+
+  const { data, error } = await supabase
+    .from('concluded')
     .select('*')
     .gte('concluded_at', limite.toISOString())
     .order('concluded_at', { ascending: false });
+
   if (error) {
     tbody.innerHTML = `<tr><td colspan="4" style="color:red">Erro: ${error.message}</td></tr>`;
-    console.error(error); return;
+    console.error(error);
+    return;
   }
   if (!data.length) {
     tbody.innerHTML = `<tr><td colspan="4">Nenhuma tarefa concluída na última semana.</td></tr>`;
     return;
   }
+
   tbody.innerHTML = data.map(r => {
     const dt = new Date(r.concluded_at).toLocaleString();
-    return `<tr><td>${r.task}</td><td>${r.contexto||''}</td><td>${r.responsavel||''}</td><td>${dt}</td></tr>`;
+    return `
+      <tr>
+        <td>${r.task}</td>
+        <td>${r.contexto || ''}</td>
+        <td>${r.responsavel || ''}</td>
+        <td>${dt}</td>
+      </tr>`;
   }).join('');
-});
+};
 
 /* ========= EXCLUSÃO ========= */
 document.getElementById('btnCancelarExcluir').onclick = () => {
-  show('modalExcluir',false);
+  show('modalExcluir', false);
   document.querySelector('#modalExcluir .read-modal').style.display = 'none';
 };
 document.getElementById('btnConfirmarExcluir').onclick = async () => {
-  if (!t
+  if (!tarefaParaExcluir) return;
+
+  const { error: logError } = await supabase
+    .from('excluidos')
+    .insert([{
+      todo_id: tarefaParaExcluir.id,
+      task: tarefaParaExcluir.task,
+      contexto: tarefaParaExcluir.contexto,
+      responsavel: tarefaParaExcluir.responsavel
+    }]);
+
+  const { error: delError } = await supabase
+    .from('todos')
+    .delete()
+    .eq('id', tarefaParaExcluir.id);
+
+  show('modalExcluir', false);
+  document.querySelector('#modalExcluir .read-modal').style.display = 'none';
+  tarefaParaExcluir = null;
+
+  if (logError || delError) {
+    toast('Erro ao excluir');
+    console.error(logError || delError);
+  } else {
+    toast('Tarefa excluída!');
+    render();
+  }
+};
+
+/* ============= START ============= */
+document.addEventListener('DOMContentLoaded', render);
