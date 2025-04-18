@@ -184,37 +184,65 @@ editForm.addEventListener('submit', async e => {
   carregar();
 });
 
-/* ========= VER CONCLUÍDAS EM TABELA ========= */
+/* ========= VER CONCLUÍDAS – ÚLTIMA SEMANA EM TABELA ========= */
 document.getElementById('btn-concluidas').onclick = async () => {
   const modal = document.getElementById('modal-concluidas');
   const tbody = document.querySelector('#table-concluidas tbody');
-  modal.style.display = 'block';
-  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:8px">Carregando…</td></tr>';
 
+  // abre o modal
+  modal.style.display = 'block';
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="4" style="text-align:center;padding:12px">
+        Carregando…
+      </td>
+    </tr>`;
+
+  // calcula data de 7 dias atrás
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
+
+  // busca só registros da última semana
   const { data, error } = await supabase
     .from('concluded')
     .select('*')
-    .order('concluded_at',{ascending:false});
+    .gte('concluded_at', weekAgo.toISOString())
+    .order('concluded_at', { ascending: false });
+
   if (error) {
-    tbody.innerHTML = '<tr><td colspan="4" style="color:red;padding:8px">Erro ao carregar.</td></tr>';
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" style="color:red;padding:8px">
+          Erro ao carregar: ${error.message}
+        </td>
+      </tr>`;
     console.error(error);
     return;
   }
+
   if (!data.length) {
-    tbody.innerHTML = '<tr><td colspan="4" style="padding:8px">Nenhuma conclusão registrada.</td></tr>';
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" style="padding:8px">
+          Nenhuma tarefa concluída na última semana.
+        </td>
+      </tr>`;
     return;
   }
+
+  // popula as linhas
   tbody.innerHTML = data.map(r => {
-    const d = new Date(r.concluded_at).toLocaleString();
+    const dt = new Date(r.concluded_at).toLocaleString();
     return `
       <tr>
-        <td style="padding:8px;border:1px solid #ddd">${r.task}</td>
-        <td style="padding:8px;border:1px solid #ddd">${r.contexto||''}</td>
-        <td style="padding:8px;border:1px solid #ddd">${r.responsavel||''}</td>
-        <td style="padding:8px;border:1px solid #ddd">${d}</td>
+        <td>${r.task}</td>
+        <td>${r.contexto || ''}</td>
+        <td>${r.responsavel || ''}</td>
+        <td>${dt}</td>
       </tr>`;
   }).join('');
 };
+
 
 /* ========= INICIA ========= */
 carregar();
