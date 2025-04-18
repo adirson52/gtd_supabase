@@ -97,7 +97,7 @@ form > * { width: 100%; }
 .move-btn {
   position: absolute;
   top: 5px;
-  left: 5px;
+  right: 65px;          /* colado à esquerda do botão Editar */
   background: #bbb;
   color: #222;
   border: none;
@@ -109,7 +109,8 @@ form > * { width: 100%; }
 .move-btn:active {
   cursor: grabbing;
 }
-/* Botão Editar */
+
+/* Botão Editar fica inalterado */
 .edit-btn {
   position: absolute;
   top: 5px;
@@ -121,6 +122,7 @@ form > * { width: 100%; }
   font-size: .8rem;
   cursor: pointer;
 }
+
 
 /* ---------- RESPONSIVO ---------- */
 @media (max-width:640px) {
