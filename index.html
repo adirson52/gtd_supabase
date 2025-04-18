@@ -3,81 +3,84 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kanban de Atividades - Freitas</title>
+  <title>Kanban de Atividades – Freitas</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>Kanban de Atividades (Com Edição)</h1>
+  <h1>Kanban de Atividades (Com Edição)</h1>
 
+  <!-- ─────── FORM NOVA TAREFA ─────── -->
   <form id="form">
     <input name="titulo" placeholder="Título da tarefa" required />
+
     <select name="status">
-      <option value="urgente">ASD</option>
-      <option value="nao_iniciado">Não Iniciado</option>
-      <option value="em_andamento">Em Andamento</option>
-      <option value="com_data">Com Data</option>
+      <option value="urgente">Urgente</option>
+      <option value="nao_iniciado">Não Iniciado</option>
+      <option value="em_andamento">Em Andamento</option>
+      <option value="com_data">Com Data</option>
+      <option value="concluido">Concluído</option>
     </select>
+
     <input name="tags" placeholder="Tags (ex: faculdade;cws)" />
-    <input name="data_limite" placeholder="Data limite (YYYY-MM-DD)" />
+    <input name="data_limite" placeholder="Data limite (YYYY‑MM‑DD)" />
+    <input name="tempo_estimado" placeholder="Tempo estimado (hh:mm)" />
+
+    <select name="prioridade">
+      <option value="normal">Normal</option>
+      <option value="urgente">Urgente</option>
+    </select>
+
+    <select name="contexto">
+      <option value="Faculdade">Faculdade</option>
+      <option value="Trabalho">Trabalho</option>
+      <option value="Pessoal">Pessoal</option>
+    </select>
+
     <input name="responsavel" placeholder="Responsável" value="freitas" />
-    <button type="submit">Adicionar Tarefa</button>
+    <button type="submit">Adicionar Tarefa</button>
   </form>
 
+  <!-- botão de tarefas concluídas -->
   <div class="concluidas-wrapper">
-    <button id="btn-concluidas">Ver Concluídas</button>
+    <button id="btn-concluidas">Ver Concluídas</button>
   </div>
 
+  <!-- avisos e quadro kanban -->
   <div id="aviso"></div>
   <div class="kanban" id="kanban"></div>
 
-  <div id="overlay"></div>
-  <div id="editModal">
-    <h3>Editar Tarefa</h3>
-    <form id="editForm">
-      <input type="hidden" name="id" />
-      <input name="titulo" placeholder="Título da tarefa" required />
-      <input name="descricao" placeholder="Descrição (opcional)" />
-      <select name="status">
-        <option value="urgente">ASD</option>
-        <option value="nao_iniciado">Não Iniciado</option>
-        <option value="em_andamento">Em Andamento</option>
-        <option value="com_data">Com Data</option>
-      </select>
-      <input name="tags" placeholder="Tags" />
-      <input name="data_limite" placeholder="Data limite" />
-      <input name="responsavel" placeholder="Responsável" />
-      <button type="submit">Salvar</button>
-      <button type="button" onclick="fecharModal()">Cancelar</button>
-    </form>
-  </div>
-
-  <div id="modal-concluidas" class="hidden">
-    <div class="box">
-      <div class="modal-head">
-        <h2>Tarefas Concluídas</h2>
-        <button id="close-modal">&#10005;</button>
-      </div>
-      <div id="lista-concluidas"></div>
-    </div>
-  </div>
-
+  <!-- ─────── MODAL LEITURA ─────── -->
   <div id="readOverlay" class="overlay"></div>
   <div id="readModal" class="read-modal">
     <h3 id="readTitulo"></h3>
     <p id="readDescricao" class="read-desc"></p>
     <div id="readTags" class="read-tags"></div>
     <p id="readPrazo" class="read-date"></p>
-    <p id="readResp" class="read-date"></p>
+    <p id="readResp"  class="read-date"></p>
     <button id="fecharRead" class="read-close">OK</button>
   </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script>
-  const supabase = supabase.createClient(
-    'https://pgbwgsmkngvhygwdjqng.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnYndnc21rbmd2aHlnd2RqcW5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5NDgyNzYsImV4cCI6MjA2MDUyNDI3Nn0.l08904UwxzJjnHDil70hiwekhBEB50NvXInmLFou-Ow'
-  );
-</script>
 
-  <script src="script.js"></script>
+  <!-- ─────── MODAL CONCLUÍDAS ─────── -->
+  <div id="modal-concluidas" class="hidden">
+    <div class="box">
+      <div class="modal-head">
+        <h2>Tarefas Concluídas</h2>
+        <button id="close-modal">&#10005;</button>
+      </div>
+      <div id="lista-concluidas"></div>
+    </div>
+  </div>
+
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script>
+    const supabase = supabase.createClient(
+      'https://pgbwgsmkngvhygwdjqng.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnYndnc21rbmd2aHlnd2RqcW5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5NDgyNzYsImV4cCI6MjA2MDUyNDI3Nn0.l08904UwxzJjnHDil70hiwekhBEB50NvXInmLFou-Ow'
+    );
+  </script>
+
+  <!-- Seu script principal já adaptado para Supabase -->
+  <script src="script_supabase.js"></script>
 </body>
 </html>
