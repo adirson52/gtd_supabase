@@ -88,13 +88,25 @@
 
   <!-- ── MODAL CONCLUÍDAS (LOG) ── -->
   <div id="modal-concluidas" class="overlay">
-    <div class="read-modal" style="max-width:500px;max-height:80vh;overflow:auto">
-      <h3>Tarefas Concluídas (log)</h3>
-      <div id="lista-concluidas"></div>
-      <button onclick="document.getElementById('modal-concluidas').style.display='none'"
-              class="read-close">Fechar</button>
+    <div class="read-modal" style="max-width:600px; max-height:80vh; overflow:auto; padding:1rem;">
+      <h3>Tarefas Concluídas (Log)</h3>
+      <table id="table-concluidas" style="width:100%; border-collapse: collapse; margin-bottom:1rem;">
+        <thead>
+          <tr style="background:#f0f0f0;">
+            <th style="padding:8px; border:1px solid #ddd;">Título</th>
+            <th style="padding:8px; border:1px solid #ddd;">Contexto</th>
+            <th style="padding:8px; border:1px solid #ddd;">Responsável</th>
+            <th style="padding:8px; border:1px solid #ddd;">Data de Conclusão</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- linhas inseridas dinamicamente -->
+        </tbody>
+      </table>
+      <button onclick="modalConcluidasClose()" class="read-close">Fechar</button>
     </div>
   </div>
+
 
   <!-- libs -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
@@ -107,6 +119,12 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnYndnc21rbmd2aHlnd2RqcW5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5NDgyNzYsImV4cCI6MjA2MDUyNDI3Nn0.l08904UwxzJjnHDil70hiwekhBEB50NvXInmLFou-Ow'
     );
   </script>
+  <script>
+  function modalConcluidasClose(){
+    document.getElementById('modal-concluidas').style.display='none';
+  }
+</script>
+
   <script src="script.js"></script>
 </body>
 </html>
