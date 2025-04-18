@@ -12,6 +12,22 @@ const sql2mmss = v => v ? v.slice(3) : '';
 
 let tarefaParaExcluir = null;   // armazena card alvo de exclusão
 
+/* ============ THEME TOGGLE ============ */
+function initTheme() {
+  const toggle = $('#theme-toggle');
+  const stored = localStorage.getItem('theme');
+  const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  let theme = stored ? stored : (systemDark ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', theme);
+  toggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+  toggle.onclick = () => {
+    theme = theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+    toggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+  };
+}
+
 /* ============ RENDERIZAÇÃO ============ */
 async function render() {
   const { data: tarefas, error } = await supabase
@@ -60,17 +76,9 @@ async function render() {
 
   // eventos nos cards
   $$('.card').forEach(card => {
-    const id = card.dataset.id;
-    const dados = tarefas.find(t => t.id === id);
-
-    card.onclick = e => {
-      if (e.target.closest('button')) return;
-      openRead(dados);
-    };
-    card.querySelector('.edit-btn').onclick = e => {
-      e.stopPropagation();
-      openEdit(dados);
-    };
+    const dados = tarefas.find(t => t.id === card.dataset.id);
+    card.onclick = e => { if (e.target.closest('button')) return; openRead(dados); };
+    card.querySelector('.edit-btn').onclick = e => { e.stopPropagation(); openEdit(dados); };
   });
 
   // drag & drop
@@ -117,15 +125,15 @@ $('#form').onsubmit = async e => {
     .single();
 
   const nova = {
-    task:          f.titulo.value,
-    descricao:     f.descricao.value || null,
-    status:        f.status.value,
+    task:           f.titulo.value,
+    descricao:      f.descricao.value || null,
+    status:         f.status.value,
     tempo_estimado: mmss2sql(f.tempo_estimado.value),
-    prioridade:    f.prioridade.value,
-    contexto:      f.contexto.value,
-    responsavel:   f.responsavel.value,
-    ordem:         (max?.ordem || 0) + 1,
-    user_id:       '00000000-0000-0000-0000-000000000000'
+    prioridade:     f.prioridade.value,
+    contexto:       f.contexto.value,
+    responsavel:    f.responsavel.value,
+    ordem:          (max?.ordem || 0) + 1,
+    user_id:        '00000000-0000-0000-0000-000000000000'
   };
   const { error } = await supabase.from('todos').insert([nova]);
   if (error) { toast('Erro ao salvar'); console.error(error); return; }
@@ -136,12 +144,12 @@ $('#form').onsubmit = async e => {
 
 /* ============ MODAL LEITURA ============ */
 function openRead(t) {
-  $('#readTitulo').textContent      = t.task;
-  $('#readDescricao').textContent   = t.descricao || '(sem descrição)';
-  $('#readTempo').textContent       = t.tempo_estimado ? 'Tempo: ' + sql2mmss(t.tempo_estimado) : '';
-  $('#readPrioridade').textContent  = t.prioridade   ? 'Prioridade: ' + t.prioridade : '';
-  $('#readContexto').textContent    = t.contexto     ? 'Contexto: ' + t.contexto : '';
-  $('#readResp').textContent        = 'Resp: ' + (t.responsavel || '-');
+  $('#readTitulo').textContent    = t.task;
+  $('#readDescricao').textContent = t.descricao || '(sem descrição)';
+  $('#readTempo').textContent     = t.tempo_estimado ? 'Tempo: ' + sql2mmss(t.tempo_estimado) : '';
+  $('#readPrioridade').textContent= t.prioridade ? 'Prioridade: ' + t.prioridade : '';
+  $('#readContexto').textContent  = t.contexto ? 'Contexto: ' + t.contexto : '';
+  $('#readResp').textContent      = 'Resp: ' + (t.responsavel || '-');
   show('#readOverlay');
   show('#readModal');
 }
@@ -160,16 +168,13 @@ function openEdit(t) {
   f.tempo_estimado.value = sql2mmss(t.tempo_estimado);
   f.prioridade.value     = t.prioridade || 'normal';
   f.contexto.value       = t.contexto   || 'Faculdade';
-  f.responsavel.value    = t.responsavel || '';
+  f.responsavel.value    = t.responsavel||'';
 
   show('#overlay');
   show('#editModal');
-
-  // exclui dentro do modal
   $('#btn-excluir-modal').onclick = () => {
     tarefaParaExcluir = t;
     show('#modalExcluir');
-    document.querySelector('#modalExcluir .read-modal').style.display = 'block';
   };
 }
 $('#cancelEdit').onclick = () => {
@@ -180,13 +185,13 @@ $('#editForm').onsubmit = async e => {
   e.preventDefault();
   const f = e.target;
   const upd = {
-    task:          f.titulo.value,
-    descricao:     f.descricao.value || null,
-    status:        f.status.value,
+    task:           f.titulo.value,
+    descricao:      f.descricao.value || null,
+    status:         f.status.value,
     tempo_estimado: mmss2sql(f.tempo_estimado.value),
-    prioridade:    f.prioridade.value,
-    contexto:      f.contexto.value,
-    responsavel:   f.responsavel.value
+    prioridade:     f.prioridade.value,
+    contexto:       f.contexto.value,
+    responsavel:    f.responsavel.value
   };
   const { error } = await supabase.from('todos').update(upd).eq('id', f.id.value);
   if (error) { toast('Erro ao atualizar'); console.error(error); return; }
@@ -212,7 +217,6 @@ $('#btn-concluidas').onclick = async () => {
     .select('*')
     .gte('concluded_at', since)
     .order('concluded_at', { ascending: false });
-
   if (error) {
     tbody.innerHTML = `<tr><td colspan="4" style="color:red">${error.message}</td></tr>`;
     return;
@@ -224,29 +228,20 @@ $('#btn-concluidas').onclick = async () => {
   tbody.innerHTML = data.map(r => `
     <tr>
       <td>${r.task}</td>
-      <td>${r.contexto     || ''}</td>
-      <td>${r.responsavel  || ''}</td>
+      <td>${r.contexto||''}</td>
+      <td>${r.responsavel||''}</td>
       <td>${new Date(r.concluded_at).toLocaleString()}</td>
-    </tr>
-  `).join('');
+    </tr>`).join('');
 };
 function closeConcluidas() {
-  const overlay = $('#modal-concluidas');
-  const inner   = overlay.querySelector('.read-modal');
   show('#modal-concluidas', false);
-  inner.style.display = 'none';
 }
 
 /* ============ EXCLUIR ============ */
 $('#btnCancelarExcluir').onclick = () => show('#modalExcluir', false);
 $('#btnConfirmarExcluir').onclick = async () => {
   if (!tarefaParaExcluir) return;
-  await supabase.from('excluidos').insert([{
-    todo_id:     tarefaParaExcluir.id,
-    task:        tarefaParaExcluir.task,
-    contexto:    tarefaParaExcluir.contexto,
-    responsavel: tarefaParaExcluir.responsavel
-  }]);
+  await supabase.from('excluidos').insert([{ todo_id: tarefaParaExcluir.id, task: tarefaParaExcluir.task, contexto: tarefaParaExcluir.contexto, responsavel: tarefaParaExcluir.responsavel }]);
   await supabase.from('todos').delete().eq('id', tarefaParaExcluir.id);
   show('#modalExcluir', false);
   tarefaParaExcluir = null;
@@ -255,4 +250,7 @@ $('#btnConfirmarExcluir').onclick = async () => {
 };
 
 /* ============ START ============ */
-document.addEventListener('DOMContentLoaded', render);
+document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+  render();
+});
