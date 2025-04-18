@@ -228,3 +228,23 @@ form > * { width: 100%; }
   cursor: pointer;
 }
 
+/* Estilo “Excel-like” para a tabela de concluídas */
+#table-concluidas {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  font-family: monospace;
+}
+#table-concluidas th,
+#table-concluidas td {
+  border: 1px solid #bbb;
+  padding: 6px 8px;
+  text-align: left;
+}
+#table-concluidas thead {
+  background: #ddd;
+  font-weight: bold;
+}
+#table-concluidas tbody tr:nth-child(even) {
+  background: #f5f5f5;
+}
