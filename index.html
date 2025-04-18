@@ -9,7 +9,7 @@
 <body>
   <h1>Kanban de Atividades (Com Edição)</h1>
 
-  <!-- ── FORM TAREFA ── -->
+  <!-- FORMULÁRIO DE TAREFA -->
   <form id="form">
     <input   name="titulo"        placeholder="Título" required/>
     <textarea name="descricao"    placeholder="Descrição (opcional)"></textarea>
@@ -39,11 +39,11 @@
     <button id="btn-concluidas">Ver Concluídas</button>
   </div>
 
-  <!-- aviso e quadro -->
+  <!-- AVISO E QUADRO KANBAN -->
   <div id="aviso"></div>
   <div id="kanban" class="kanban"></div>
 
-  <!-- ── MODAL LEITURA ── -->
+  <!-- MODAL DE LEITURA -->
   <div id="readOverlay" class="overlay"></div>
   <div id="readModal"   class="read-modal">
     <h3 id="readTitulo"></h3>
@@ -55,7 +55,7 @@
     <button id="fecharRead"  class="read-close">OK</button>
   </div>
 
-  <!-- ── MODAL EDIÇÃO ── -->
+  <!-- MODAL DE EDIÇÃO -->
   <div id="overlay"   class="overlay"></div>
   <div id="editModal" class="read-modal" style="max-width:380px">
     <h3>Editar Tarefa</h3>
@@ -86,45 +86,45 @@
     </form>
   </div>
 
-  <!-- ── MODAL CONCLUÍDAS (LOG) ── -->
+  <!-- MODAL “VER CONCLUÍDAS” EM TABELA -->
   <div id="modal-concluidas" class="overlay">
-    <div class="read-modal" style="max-width:600px; max-height:80vh; overflow:auto; padding:1rem;">
-      <h3>Tarefas Concluídas (Log)</h3>
+    <div class="read-modal" style="max-width:600px; max-height:80vh; overflow:auto; padding:1rem">
+      <h3>Tarefas Concluídas (Log Completo)</h3>
       <table id="table-concluidas" style="width:100%; border-collapse: collapse; margin-bottom:1rem;">
         <thead>
-          <tr style="background:#f0f0f0;">
-            <th style="padding:8px; border:1px solid #ddd;">Título</th>
-            <th style="padding:8px; border:1px solid #ddd;">Contexto</th>
-            <th style="padding:8px; border:1px solid #ddd;">Responsável</th>
-            <th style="padding:8px; border:1px solid #ddd;">Data de Conclusão</th>
+          <tr style="background:#f0f0f0">
+            <th style="padding:8px; border:1px solid #ddd">Título</th>
+            <th style="padding:8px; border:1px solid #ddd">Contexto</th>
+            <th style="padding:8px; border:1px solid #ddd">Responsável</th>
+            <th style="padding:8px; border:1px solid #ddd">Data de Conclusão</th>
           </tr>
         </thead>
         <tbody>
-          <!-- linhas inseridas dinamicamente -->
+          <!-- preenchido pelo script -->
         </tbody>
       </table>
       <button onclick="modalConcluidasClose()" class="read-close">Fechar</button>
     </div>
   </div>
 
+  <!-- funções globais -->
+  <script>
+    function modalConcluidasClose(){
+      document.getElementById('modal-concluidas').style.display = 'none';
+    }
+  </script>
 
   <!-- libs -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
-  <!-- supabase client -->
+  <!-- inicializa supabase e carrega seu script -->
   <script>
     window.supabase = supabase.createClient(
       'https://pgbwgsmkngvhygwdjqng.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnYndnc21rbmd2aHlnd2RqcW5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5NDgyNzYsImV4cCI6MjA2MDUyNDI3Nn0.l08904UwxzJjnHDil70hiwekhBEB50NvXInmLFou-Ow'
     );
   </script>
-  <script>
-  function modalConcluidasClose(){
-    document.getElementById('modal-concluidas').style.display='none';
-  }
-</script>
-
   <script src="script.js"></script>
 </body>
 </html>
