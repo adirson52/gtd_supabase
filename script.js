@@ -38,7 +38,7 @@ async function render() {
         ${t.responsavel? `<div class="date">Resp: ${t.responsavel}</div>`:''}
         <button class="move-btn">Move</button>
         <button class="edit-btn">Editar</button>
-        <button class="delete-btn" style="position:absolute;top:5px;right:115px;background:#ef5350;color:#fff;border:none;border-radius:4px;padding:.25rem .5rem;font-size:.8rem;cursor:pointer">Excluir</button>
+        <button class="delete-btn">Excluir</button>
       </div>`);
   });
 
