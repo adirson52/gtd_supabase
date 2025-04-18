@@ -1,205 +1,117 @@
-/* ============= UTIL ============= */
-const show = (id, on = true) => document.getElementById(id).style.display = on ? 'block' : 'none';
-const toast = msg => {
-  const el = document.getElementById('aviso');
-  el.textContent = msg;
-  show('aviso', true);
-  setTimeout(() => show('aviso', false), 4000);
-};
-const mmss2sql = v => v && /^\d{1,2}:\d{2}$/.test(v) ? '00:' + v.padStart(5, '0') : null;
-const sql2mmss = v => v ? v.slice(3) : '';
-let tarefaParaExcluir = null;
+/* ---------- GERAL ---------- */
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial;
+  background:#f9f9f9;
+  color:#222;
+}
+h1{margin:0;text-align:center;padding:1rem;font-weight:500}
 
-/* ============= RENDER ============= */
-async function render() {
-  const { data: tarefas, error } = await supabase
-    .from('todos').select('*')
-    .order('status', { ascending: true })
-    .order('ordem', { ascending: true });
-  if (error) {
-    console.error('Erro ao carregar tarefas:', error.message);
-    return;
-  }
+/* ---------- FORMULÁRIO ---------- */
+form{
+  max-width:600px;margin:1rem auto;
+  display:flex;flex-direction:column;gap:.5rem;
+}
+input,textarea,select,button{
+  padding:.5rem;font-size:1rem;border:1px solid #ccc;border-radius:6px;
+}
+button{cursor:pointer}
+form>*{width:100%}
 
-  const labels = {
-    urgente:      'Urgente',
-    nao_iniciado: 'Não Iniciado',
-    em_andamento: 'Em Andamento',
-    com_data:     'Com Data',
-    concluido:    'Concluído'
-  };
+/* ---------- BOTÃO CONCLUÍDAS ---------- */
+.concluidas-wrapper{
+  max-width:600px;margin:0 auto 1rem;padding:0 1rem;
+}
+#btn-concluidas{
+  display:block;width:100%;
+  background:#c8e6c9;color:#064e3b;
+  border:none;padding:.5rem 1rem;border-radius:6px;font-weight:500;
+  box-shadow:0 2px 4px rgba(0,0,0,.1);
+  transition:background .2s;
+}
+#btn-concluidas:hover{background:#b4dcb5}
 
-  const kanban = document.getElementById('kanban');
-  kanban.innerHTML = Object.entries(labels)
-    .map(([key, label]) => `<div class="column" data-col="${key}"><h2>${label}</h2></div>`)
-    .join('');
+/* ---------- KANBAN ---------- */
+.kanban{display:flex;gap:1rem;padding:1rem;overflow-x:auto}
+.column{
+  flex:1;min-width:250px;background:#fff;border-radius:12px;padding:1rem;
+  box-shadow:0 2px 6px rgba(0,0,0,.1);
+}
+.column h2{
+  margin:0 0 .5rem;font-size:1.2rem;border-bottom:1px solid #eee;padding-bottom:.5rem;
+}
+.card{
+  background:#f1f1f1;border-radius:8px;padding:.5rem;margin-bottom:.5rem;position:relative;
+}
+.card .title{
+  font-weight:600;margin-bottom:.25rem;
+  padding-right:120px;               /* espaço p/ botões sem quebrar título */
+  word-break:break-word;
+}
+.card .desc{font-size:.9rem;margin:.25rem 0}
+.card .date{font-size:.75rem;color:#666;margin-top:.25rem}
 
-  const recentes = tarefas
-    .filter(t => t.status === 'concluido')
-    .sort((a, b) => new Date(b.moved_at) - new Date(a.moved_at))
-    .slice(0, 3).map(t => t.id);
-
-  tarefas.forEach(t => {
-    if (t.status === 'concluido' && !recentes.includes(t.id)) return;
-    const col = kanban.querySelector(`.column[data-col="${t.status}"]`);
-    if (!col) return;
-    col.insertAdjacentHTML('beforeend', `
-      <div class="card" data-id="${t.id}">
-        <div class="title">${t.task}</div>
-        ${t.descricao ? `<div class="desc">${t.descricao}</div>` : ''}
-        ${t.prioridade ? `<div class="date">Prioridade: ${t.prioridade}</div>` : ''}
-        ${t.contexto   ? `<div class="date">Contexto: ${t.contexto}</div>` : ''}
-        ${t.tempo_estimado ? `<div class="date">Tempo: ${sql2mmss(t.tempo_estimado)}</div>` : ''}
-        ${t.responsavel ? `<div class="date">Resp: ${t.responsavel}</div>` : ''}
-        <button class="move-btn">Move</button>
-        <button class="edit-btn">Editar</button>
-      </div>
-    `);
-  });
-
-  kanban.querySelectorAll('.card').forEach(card => {
-    const id = card.dataset.id;
-    const dados = tarefas.find(x => x.id === id);
-
-    card.querySelector('.edit-btn').onclick = e => {
-      e.stopPropagation();
-      openEdit(dados);
-    };
-
-    card.onclick = e => {
-      if (e.target.matches('.move-btn, .edit-btn')) return;
-      openRead(dados);
-    };
-  });
-
-  kanban.querySelectorAll('.column').forEach(col => {
-    Sortable.create(col, {
-      group: 'kanban',
-      animation: 150,
-      handle: '.move-btn',
-      filter: 'h2',
-      onEnd: async evt => {
-        const dest = evt.to.dataset.col;
-        const cards = [...evt.to.querySelectorAll('.card')];
-        for (let i = 0; i < cards.length; i++) {
-          const id = cards[i].dataset.id;
-          await supabase.from('todos')
-            .update({ status: dest, ordem: i, moved_at: new Date().toISOString() })
-            .eq('id', id);
-          if (dest === 'concluido') {
-            const t = tarefas.find(x => x.id === id);
-            await supabase.from('concluded').insert([{ todo_id: id, task: t.task, contexto: t.contexto, responsavel: t.responsavel }]);
-          }
-        }
-        toast('Tarefa movida!');
-        render();
-      }
-    });
-  });
+/* ---------- BOTÕES NO CARD ---------- */
+.move-btn{
+  position:absolute;top:5px;right:70px;
+  background:#bbb;color:#222;border:none;border-radius:4px;
+  padding:.25rem .5rem;font-size:.8rem;cursor:grab;
+}
+.move-btn:active{cursor:grabbing}
+.edit-btn{
+  position:absolute;top:5px;right:5px;
+  background:#ffc107;border:none;border-radius:4px;
+  padding:.25rem .5rem;font-size:.8rem;cursor:pointer
 }
 
-/* ============= NOVA TAREFA ============= */
-document.getElementById('form').addEventListener('submit', async e => {
-  e.preventDefault();
-  const f = e.target;
-  const { data: max } = await supabase.from('todos')
-    .select('ordem').eq('status', f.status.value)
-    .order('ordem', { ascending: false }).limit(1).single();
-  const nova = {
-    task: f.titulo.value,
-    descricao: f.descricao.value || null,
-    status: f.status.value,
-    tempo_estimado: mmss2sql(f.tempo_estimado.value),
-    prioridade: f.prioridade.value,
-    contexto: f.contexto.value,
-    responsavel: f.responsavel.value,
-    ordem: (max?.ordem || 0) + 1,
-    user_id: '00000000-0000-0000-0000-000000000000'
-  };
-  const { error } = await supabase.from('todos').insert([nova]);
-  if (error) { toast('Erro ao salvar'); console.error(error); return; }
-  f.reset(); toast('Tarefa salva!'); render();
-});
-
-/* ============= LEITURA ============= */
-function openRead(t) {
-  readTitulo.textContent    = t.task;
-  readDescricao.textContent = t.descricao || '(sem descrição)';
-  readTempo.textContent     = t.tempo_estimado ? 'Tempo: ' + sql2mmss(t.tempo_estimado) : '';
-  readPrioridade.textContent= t.prioridade ? 'Prioridade: ' + t.prioridade : '';
-  readContexto.textContent  = t.contexto ? 'Contexto: ' + t.contexto : '';
-  readResp.textContent      = 'Resp: ' + (t.responsavel || '-');
-  show('readOverlay'); show('readModal');
+/* ---------- RESPONSIVO ---------- */
+@media (max-width:640px){
+  .kanban{flex-wrap:wrap;padding:.5rem}
+  .column{min-width:100%;margin-bottom:1rem}
 }
-fecharRead.onclick = () => { show('readOverlay', false); show('readModal', false); };
 
-/* ============= EDIÇÃO ============= */
-function openEdit(t) {
-  const f = editForm;
-  f.id.value             = t.id;
-  f.titulo.value         = t.task;
-  f.descricao.value      = t.descricao || '';
-  f.status.value         = t.status;
-  f.tempo_estimado.value = sql2mmss(t.tempo_estimado);
-  f.prioridade.value     = t.prioridade || 'normal';
-  f.contexto.value       = t.contexto   || 'Faculdade';
-  f.responsavel.value    = t.responsavel || '';
-  show('overlay'); show('editModal');
+/* ---------- AVISO ---------- */
+#aviso{
+  display:none;text-align:center;padding:1rem;
+  background:#e0f7fa;color:#00796b;font-weight:600;
+  margin:1rem auto;max-width:600px;border-radius:8px
 }
-cancelEdit.onclick = () => { show('overlay', false); show('editModal', false); };
-editForm.addEventListener('submit', async e => {
-  e.preventDefault();
-  const f = e.target;
-  const upd = {
-    task: f.titulo.value,
-    descricao: f.descricao.value || null,
-    status: f.status.value,
-    tempo_estimado: mmss2sql(f.tempo_estimado.value),
-    prioridade: f.prioridade.value,
-    contexto: f.contexto.value,
-    responsavel: f.responsavel.value
-  };
-  const { error } = await supabase.from('todos').update(upd).eq('id', f.id.value);
-  if (error) { toast('Erro ao atualizar'); console.error(error); return; }
-  show('overlay', false); show('editModal', false);
-  toast('Tarefa atualizada!'); render();
-});
 
-/* ============= CONCLUÍDAS ============= */
-document.getElementById('btn-concluidas').onclick = async () => {
-  const m = document.getElementById('modal-concluidas');
-  const i = m.querySelector('.read-modal');
-  const tb= document.querySelector('#table-concluidas tbody');
-  m.style.display='block'; i.style.display='block';
-  tb.innerHTML=`<tr><td colspan="4" style="text-align:center">Carregando…</td></tr>`;
-  const lim=new Date(); lim.setDate(lim.getDate()-7);
-  const { data, error } = await supabase.from('concluded')
-    .select('*')
-    .gte('concluded_at', lim.toISOString())
-    .order('concluded_at',{ascending:false});
-  if(error){ tb.innerHTML=`<tr><td colspan="4" style="color:red">Erro: ${error.message}</td></tr>`; return; }
-  if(!data.length){ tb.innerHTML=`<tr><td colspan="4">Nenhuma tarefa concluída na última semana.</td></tr>`; return; }
-  tb.innerHTML = data.map(r => {
-    const dt=new Date(r.concluded_at).toLocaleString();
-    return `<tr><td>${r.task}</td><td>${r.contexto||''}</td><td>${r.responsavel||''}</td><td>${dt}</td></tr>`;
-  }).join('');
-};
+/* ---------- MODAIS ---------- */
+.overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:950
+}
+.read-modal,#editModal{
+  display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:#fff;border-radius:24px;padding:1.5rem;z-index:951;
+  width:90%;max-width:360px;box-shadow:0 15px 40px rgba(0,0,0,.25);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial;
+}
+.read-modal h3,#editModal h3{margin:0 0 .75rem;font-size:1.4rem;font-weight:600}
+.read-desc{margin:.25rem 0 1rem;color:#444;line-height:1.4}
+.read-date{font-size:.8rem;color:#666;margin:.1rem 0}
+.read-close{
+  margin-top:1rem;width:100%;padding:.6rem 0;
+  background:#007aff;color:#fff;border:none;border-radius:12px;font-weight:600;
+}
+#overlay{background:rgba(0,0,0,.5);z-index:900}
+#modal-concluidas{z-index:1000}
 
-/* ========= START ============= */
-document.getElementById('btnCancelarExcluir').onclick = ()=>{
-  show('modalExcluir',false);
-};
-document.getElementById('btnConfirmarExcluir').onclick = async ()=>{
-  if(!tarefaParaExcluir) return;
-  await supabase.from('excluidos').insert([{
-    todo_id: tarefaParaExcluir.id,
-    task: tarefaParaExcluir.task,
-    contexto: tarefaParaExcluir.contexto,
-    responsavel: tarefaParaExcluir.responsavel
-  }]);
-  await supabase.from('todos').delete().eq('id', tarefaParaExcluir.id);
-  show('modalExcluir', false);
-  toast('Tarefa excluída!'); render();
-};
+/* ---------- TABELA “EXCEL‑LIKE” ---------- */
+#table-concluidas{
+  width:100%;border-collapse:collapse;margin-bottom:1rem;font-family:monospace
+}
+#table-concluidas th,#table-concluidas td{
+  border:1px solid #bbb;padding:6px 8px;text-align:left
+}
+#table-concluidas thead{background:#ddd;font-weight:bold}
+#table-concluidas tbody tr:nth-child(even){background:#f5f5f5}
 
-document.addEventListener('DOMContentLoaded', render);
+/* ---------- BOTÃO EXCLUIR NO MODAL DE EDIÇÃO ---------- */
+#btn-excluir-modal{
+  display:block;margin-top:1rem;width:100%;padding:.6rem 0;
+  background:#d32f2f;color:#fff;border:none;border-radius:12px;font-weight:600;
+  font-size:1rem;cursor:pointer;transition:background .2s;
+}
+#btn-excluir-modal:hover{background:#b71c1c}
