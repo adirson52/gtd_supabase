@@ -231,5 +231,20 @@ document.getElementById("modal-concluidas").addEventListener("click", e => {
   if (e.target === document.getElementById("modal-concluidas")) fecharModal();
 });
 
+(async () => {
+  const { data, error } = await supabase
+    .from('todos')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Erro ao buscar tarefas:', error.message);
+  } else {
+    console.log('✅ Conexão com Supabase funcionando!');
+    console.log('Tarefas:', data);
+  }
+})();
+
+
 /* =====================  INICIALIZA  ===================== */
 carregarTarefas();
