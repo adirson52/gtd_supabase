@@ -9,11 +9,12 @@
 <body>
   <h1>Kanban de Atividades (Com Edição)</h1>
 
+  <!-- ── FORM NOVA TAREFA ── -->
   <form id="form">
-    <input   name="titulo"        placeholder="Título" required />
-    <textarea name="descricao"    placeholder="Descrição (opcional)"></textarea>
+    <input name="titulo" placeholder="Título" required />
+    <textarea name="descricao" placeholder="Descrição (opcional)"></textarea>
 
-    <select  name="status">
+    <select name="status">
       <option value="urgente">Urgente</option>
       <option value="nao_iniciado">Não Iniciado</option>
       <option value="em_andamento">Em Andamento</option>
@@ -21,20 +22,20 @@
       <option value="concluido">Concluído</option>
     </select>
 
-    <input   name="tempo_estimado" placeholder="Tempo estimado (mm:ss)" />
+    <input name="tempo_estimado" placeholder="Tempo estimado (mm:ss)" />
 
-    <select  name="prioridade">
+    <select name="prioridade">
       <option value="normal">Normal</option>
       <option value="urgente">Urgente</option>
     </select>
 
-    <select  name="contexto">
+    <select name="contexto">
       <option value="Faculdade">Faculdade</option>
       <option value="Trabalho">Trabalho</option>
       <option value="Pessoal">Pessoal</option>
     </select>
 
-    <input   name="responsavel" placeholder="Responsável" value="freitas" />
+    <input name="responsavel" placeholder="Responsável" value="freitas" />
     <button>Adicionar Tarefa</button>
   </form>
 
