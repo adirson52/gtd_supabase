@@ -64,4 +64,120 @@ async function render() {
         const dest = evt.to.dataset.col;
         const items = [...evt.to.querySelectorAll('.card')];
         for(let i=0;i<items.length;i++){
-          const id
+          const id = items[i].dataset.id;
+          await supabase.from('todos')
+            .update({ status:dest, ordem:i, moved_at:new Date().toISOString() })
+            .eq('id',id);
+          /* se foi para concluído: log */
+          if(dest==='concluido'){
+            const t = tarefas.find(x=>x.id===id);
+            await supabase.from('concluded').insert([{
+              todo_id:id, task:t.task, contexto:t.contexto,
+              responsavel:t.responsavel
+            }]);
+          }
+        }
+        toast('Tarefa movida!');
+        render();
+      }
+    });
+  });
+}
+
+/* ============= NOVA TAREFA ============= */
+document.getElementById('form').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const f=e.target;
+  const { data:max } = await supabase
+    .from('todos').select('ordem')
+    .eq('status',f.status.value).order('ordem',{ascending:false}).limit(1).single();
+  const nova={
+    task:f.titulo.value, descricao:f.descricao.value||null,
+    status:f.status.value, tempo_estimado:mmss2sql(f.tempo_estimado.value),
+    prioridade:f.prioridade.value, contexto:f.contexto.value,
+    responsavel:f.responsavel.value, ordem:(max?.ordem||0)+1,
+    user_id:'00000000-0000-0000-0000-000000000000'
+  };
+  const { error } = await supabase.from('todos').insert([nova]);
+  if(error){toast('Erro ao salvar');console.error(error);return;}
+  f.reset(); toast('Tarefa salva!'); render();
+});
+
+/* ============= MODAL LEITURA ============= */
+function openRead(t){
+  readTitulo.textContent      = t.task;
+  readDescricao.textContent   = t.descricao||'(sem descrição)';
+  readTempo.textContent       = t.tempo_estimado?'Tempo: '+sql2mmss(t.tempo_estimado):'';
+  readPrioridade.textContent  = t.prioridade? 'Prioridade: '+t.prioridade:'';
+  readContexto.textContent    = t.contexto?   'Contexto: '+t.contexto:'';
+  readResp.textContent        = 'Resp: '+(t.responsavel||'-');
+  show('readOverlay'); show('readModal');
+}
+fecharRead.onclick = () => { show('readOverlay',false); show('readModal',false); };
+
+/* ============= MODAL EDIÇÃO ============= */
+function openEdit(t){
+  const f = editForm;
+  f.id.value             = t.id;
+  f.titulo.value         = t.task;
+  f.descricao.value      = t.descricao||'';
+  f.status.value         = t.status;
+  f.tempo_estimado.value = sql2mmss(t.tempo_estimado);
+  f.prioridade.value     = t.prioridade||'normal';
+  f.contexto.value       = t.contexto||'Faculdade';
+  f.responsavel.value    = t.responsavel||'';
+  show('overlay'); show('editModal');
+}
+cancelEdit.onclick = () => { show('overlay',false); show('editModal',false); };
+
+editForm.addEventListener('submit', async e=>{
+  e.preventDefault();
+  const f=e.target;
+  const upd={
+    task:f.titulo.value,
+    descricao:f.descricao.value||null,
+    status:f.status.value,
+    tempo_estimado:mmss2sql(f.tempo_estimado.value),
+    prioridade:f.prioridade.value,
+    contexto:f.contexto.value,
+    responsavel:f.responsavel.value
+  };
+  const { error } = await supabase.from('todos').update(upd).eq('id',f.id.value);
+  if(error){toast('Erro ao atualizar');console.error(error);return;}
+  show('overlay',false); show('editModal',false);
+  toast('Tarefa atualizada!'); render();
+});
+
+/* ============= VER CONCLUÍDAS (últ. semana) ============= */
+document.getElementById('btn-concluidas').addEventListener('click', async ()=>{
+  const modal = document.getElementById('modal-concluidas');
+  const tbody = document.querySelector('#table-concluidas tbody');
+  show('modal-concluidas');
+
+  tbody.innerHTML = `<tr><td colspan="4" style="text-align:center">Carregando…</td></tr>`;
+  const dt = new Date(); dt.setDate(dt.getDate()-7);
+
+  const { data, error } = await supabase
+    .from('concluded')
+    .select('*')
+    .gte('concluded_at', dt.toISOString())
+    .order('concluded_at',{ascending:false});
+
+  if(error){
+    tbody.innerHTML = `<tr><td colspan="4" style="color:red">Erro: ${error.message}</td></tr>`;
+    console.error(error); return;
+  }
+  if(!data.length){
+    tbody.innerHTML = `<tr><td colspan="4">Nenhuma tarefa concluída na última semana.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map(r=>{
+    const d = new Date(r.concluded_at).toLocaleString();
+    return `<tr>
+      <td>${r.task}</td><td>${r.contexto||''}</td>
+      <td>${r.responsavel||''}</td><td>${d}</td></tr>`;
+  }).join('');
+});
+
+/* ============= START ============= */
+document.addEventListener('DOMContentLoaded', render);
