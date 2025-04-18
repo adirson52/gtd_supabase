@@ -74,20 +74,27 @@ form > * { width: 100%; }
   padding-bottom: .5rem;
 }
 .card {
+  /* já existente */
   background: #f1f1f1;
   border-radius: 8px;
   padding: .5rem;
   margin-bottom: .5rem;
   position: relative;
+
+  /* novo: reserva 110px à direita para os botões */
+  padding-right: 110px;
 }
+
+/* opcional: garante que o título não quebre se for muito longo */
 .card .title {
-  font-weight: 600;
-  margin-bottom: .25rem;
+  display: block;
+  /* ocupa todo o espaço à esquerda dos botões */
+  width: calc(100% - 110px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.card .desc {
-  font-size: .9rem;
-  margin: .25rem 0;
-}
+
 .card .date {
   font-size: .75rem;
   color: #666;
