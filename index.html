@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-concluidas-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
@@ -9,7 +9,7 @@
 <body data-theme="">
   <h1>Lista de Atividades</h1>
 
-  <!-- Botão Tema Claro/Escuro -->
+  <!-- Botão Tema Claro/Escuro Geral -->
   <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema">🌙</button>
 
   <!-- ────── FORM ────── -->
@@ -32,15 +32,20 @@
       <option value="Faculdade">Estágio</option>
       <option value="Trabalho">Pecege</option>
       <option value="Pessoal">Monitoria</option>
-      <option value="Faculdade">Pesquisa/IC</option>
-      <option value="Trabalho">CWS</option>
-      <option value="Pessoal">Outros</option>
+      <option value="Pesquisa/IC">Pesquisa/IC</option>
+      <option value="CWS">CWS</option>
+      <option value="Outros">Outros</option>
     </select>
     <input name="responsavel" placeholder="Responsável" value="freitas" />
     <button type="submit">Adicionar Tarefa</button>
   </form>
 
   <div class="concluidas-wrapper">
+    <label for="concluidas-theme-select">Tema Concluídas:</label>
+    <select id="concluidas-theme-select">
+      <option value="light">Claro</option>
+      <option value="dark">Escuro</option>
+    </select>
     <button id="btn-concluidas">Ver Concluídas</button>
   </div>
 
@@ -77,12 +82,12 @@
         <option value="urgente">Urgente</option>
       </select>
       <select name="contexto">
-      <option value="Faculdade">Estágio</option>
-      <option value="Trabalho">Pecege</option>
-      <option value="Pessoal">Monitoria</option>
-      <option value="Faculdade">Pesquisa/IC</option>
-      <option value="Trabalho">CWS</option>
-      <option value="Pessoal">Outros</option>
+        <option value="Faculdade">Estágio</option>
+        <option value="Trabalho">Pecege</option>
+        <option value="Pessoal">Monitoria</option>
+        <option value="Pesquisa/IC">Pesquisa/IC</option>
+        <option value="CWS">CWS</option>
+        <option value="Outros">Outros</option>
       </select>
       <input name="responsavel" placeholder="Responsável" />
       <button type="submit">Salvar</button>
@@ -129,27 +134,5 @@
 
   <!-- seu JS -->
   <script src="script.js"></script>
-
-  <!-- Toggle Theme Script -->
-  <script>
-    const btn = document.getElementById('theme-toggle');
-    const root = document.body;
-    const saved = localStorage.getItem('theme');
-    if (saved) root.setAttribute('data-theme', saved);
-    else if (window.matchMedia('(prefers-color-scheme: dark)').matches) root.setAttribute('data-theme','dark');
-    
-    function updateIcon() {
-      btn.textContent = root.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
-    }
-    updateIcon();
-    
-    btn.onclick = () => {
-      const theme = root.getAttribute('data-theme') === 'dark' ? '' : 'dark';
-      root.setAttribute('data-theme', theme);
-      localStorage.setItem('theme', theme);
-      updateIcon();
-    };
-  </script>
 </body>
 </html>
-
