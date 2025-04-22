@@ -42,7 +42,6 @@ async function render() {
     em_andamento: 'Em Andamento',
     com_data:     'Com Data',
     concluido:    'Concluído'
-   };
   };
   $('#kanban').innerHTML = Object.entries(labels)
     .map(([k, v]) => `<div class="column" data-col="${k}"><h2>${v}</h2></div>`)
