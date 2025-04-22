@@ -1,7 +1,7 @@
 /* ============ UTIL ============ */
-const $   = sel => document.querySelector(sel);
-const $$  = sel => Array.from(document.querySelectorAll(sel));
-const show  = (sel, on = true) => ($(sel).style.display = on ? 'block' : 'none');
+const $    = sel => document.querySelector(sel);
+const $$   = sel => Array.from(document.querySelectorAll(sel));
+const show = (sel, on = true) => ($(sel).style.display = on ? 'block' : 'none');
 const toast = msg => {
   $('#aviso').textContent = msg;
   show('#aviso');
@@ -14,29 +14,17 @@ let tarefaParaExcluir = null;
 
 /* ============ THEME TOGGLE ============ */
 function initTheme() {
-  const toggle = $('#theme-toggle');
+  const btn = $('#theme-toggle');
   const stored = localStorage.getItem('theme');
   const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  let theme = stored ? stored : (systemDark ? 'dark' : 'light');
+  let theme = stored || (systemDark ? 'dark' : 'light');
   document.documentElement.setAttribute('data-theme', theme);
-  toggle.textContent = theme === 'dark' ? '☀️' : '🌙';
-  toggle.onclick = () => {
+  btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+  btn.onclick = () => {
     theme = theme === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
-    toggle.textContent = theme === 'dark' ? '☀️' : '🌙';
-  };
-
-  // Concluídas theme
-  const conclSelect = $('#concluidas-theme-select');
-  const savedConcl = localStorage.getItem('concluidasTheme') || 'light';
-  conclSelect.value = savedConcl;
-  document.documentElement.setAttribute('data-concluidas-theme', savedConcl);
-
-  conclSelect.onchange = e => {
-    const val = e.target.value;
-    document.documentElement.setAttribute('data-concluidas-theme', val);
-    localStorage.setItem('concluidasTheme', val);
+    btn.textContent = theme === 'dark' ? '☀️' : '🌙';
   };
 }
 
@@ -61,8 +49,7 @@ async function render() {
   const recents = tarefas
     .filter(t => t.status === 'concluido')
     .sort((a, b) => new Date(b.moved_at) - new Date(a.moved_at))
-    .slice(0, 3)
-    .map(t => t.id);
+    .slice(0, 3).map(t => t.id);
 
   tarefas.forEach(t => {
     if (t.status === 'concluido' && !recents.includes(t.id)) return;
@@ -104,7 +91,7 @@ async function render() {
             .eq('id', id);
           if (dest === 'concluido') {
             const t = tarefas.find(x => x.id === id);
-            await supabase.from('concluded').insert([{
+            await supabase.from('concluded').insert([{ 
               todo_id:     id,
               task:        t.task,
               contexto:    t.contexto,
@@ -175,7 +162,6 @@ function openEdit(t) {
   f.prioridade.value     = t.prioridade || 'normal';
   f.contexto.value       = t.contexto   || 'Faculdade';
   f.responsavel.value    = t.responsavel||'';
-
   show('#overlay');
   show('#editModal');
   $('#btn-excluir-modal').onclick = () => {
@@ -209,7 +195,10 @@ $('#editForm').onsubmit = async e => {
 
 /* ============ VER CONCLUÍDAS ============ */
 $('#btn-concluidas').onclick = async () => {
+  const overlay = $('#modal-concluidas');
+  const modal   = overlay.querySelector('.read-modal');
   show('#modal-concluidas');
+  modal.style.display = 'block';
   $('#table-concluidas tbody').innerHTML = '<tr><td colspan="4">Carregando…</td></tr>';
 
   const since = new Date(Date.now() - 7 * 864e5).toISOString();
@@ -239,6 +228,7 @@ $('#btn-concluidas').onclick = async () => {
 };
 function closeConcluidas() {
   show('#modal-concluidas', false);
+  $('#modal-concluidas .read-modal').style.display = 'none';
 }
 
 /* ============ EXCLUIR ============ */
