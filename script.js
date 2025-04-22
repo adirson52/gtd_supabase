@@ -10,7 +10,7 @@ const toast = msg => {
 const mmss2sql = v => v && /^\d{1,2}:\d{2}$/.test(v) ? '00:' + v.padStart(5, '0') : null;
 const sql2mmss = v => v ? v.slice(3) : '';
 
-let tarefaParaExcluir = null;   // armazena card alvo de exclusão
+let tarefaParaExcluir = null;
 
 /* ============ THEME TOGGLE ============ */
 function initTheme() {
@@ -26,6 +26,18 @@ function initTheme() {
     localStorage.setItem('theme', theme);
     toggle.textContent = theme === 'dark' ? '☀️' : '🌙';
   };
+
+  // Concluídas theme
+  const conclSelect = $('#concluidas-theme-select');
+  const savedConcl = localStorage.getItem('concluidasTheme') || 'light';
+  conclSelect.value = savedConcl;
+  document.documentElement.setAttribute('data-concluidas-theme', savedConcl);
+
+  conclSelect.onchange = e => {
+    const val = e.target.value;
+    document.documentElement.setAttribute('data-concluidas-theme', val);
+    localStorage.setItem('concluidasTheme', val);
+  };
 }
 
 /* ============ RENDERIZAÇÃO ============ */
@@ -36,7 +48,6 @@ async function render() {
     .order('ordem',   { ascending: true });
   if (error) { console.error(error); return; }
 
-  // colunas kanban
   const labels = {
     nao_iniciado: 'Não Iniciado',
     em_andamento: 'Em Andamento',
@@ -47,14 +58,12 @@ async function render() {
     .map(([k, v]) => `<div class="column" data-col="${k}"><h2>${v}</h2></div>`)
     .join('');
 
-  // top3 concluído
   const recents = tarefas
     .filter(t => t.status === 'concluido')
     .sort((a, b) => new Date(b.moved_at) - new Date(a.moved_at))
     .slice(0, 3)
     .map(t => t.id);
 
-  // monta cards
   tarefas.forEach(t => {
     if (t.status === 'concluido' && !recents.includes(t.id)) return;
     const col = $(`.column[data-col="${t.status}"]`);
@@ -73,14 +82,12 @@ async function render() {
     `);
   });
 
-  // eventos nos cards
   $$('.card').forEach(card => {
     const dados = tarefas.find(t => t.id === card.dataset.id);
     card.onclick = e => { if (e.target.closest('button')) return; openRead(dados); };
     card.querySelector('.edit-btn').onclick = e => { e.stopPropagation(); openEdit(dados); };
   });
 
-  // drag & drop
   $$('.column').forEach(col => {
     Sortable.create(col, {
       group: 'kanban',
@@ -202,13 +209,8 @@ $('#editForm').onsubmit = async e => {
 
 /* ============ VER CONCLUÍDAS ============ */
 $('#btn-concluidas').onclick = async () => {
-  const overlay = $('#modal-concluidas');
-  const inner   = overlay.querySelector('.read-modal');
   show('#modal-concluidas');
-  inner.style.display = 'block';
-
-  const tbody = $('#table-concluidas tbody');
-  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center">Carregando…</td></tr>';
+  $('#table-concluidas tbody').innerHTML = '<tr><td colspan="4">Carregando…</td></tr>';
 
   const since = new Date(Date.now() - 7 * 864e5).toISOString();
   const { data, error } = await supabase
@@ -217,20 +219,23 @@ $('#btn-concluidas').onclick = async () => {
     .gte('concluded_at', since)
     .order('concluded_at', { ascending: false });
   if (error) {
-    tbody.innerHTML = `<tr><td colspan="4" style="color:red">${error.message}</td></tr>`;
+    $('#table-concluidas tbody').innerHTML =
+      `<tr><td colspan="4" style="color:red">${error.message}</td></tr>`;
     return;
   }
   if (!data.length) {
-    tbody.innerHTML = '<tr><td colspan="4">Nenhuma tarefa concluída na última semana.</td></tr>';
+    $('#table-concluidas tbody').innerHTML =
+      '<tr><td colspan="4">Nenhuma tarefa concluída na última semana.</td></tr>';
     return;
   }
-  tbody.innerHTML = data.map(r => `
+  $('#table-concluidas tbody').innerHTML = data.map(r => `
     <tr>
       <td>${r.task}</td>
-      <td>${r.contexto||''}</td>
-      <td>${r.responsavel||''}</td>
+      <td>${r.contexto || ''}</td>
+      <td>${r.responsavel || ''}</td>
       <td>${new Date(r.concluded_at).toLocaleString()}</td>
-    </tr>`).join('');
+    </tr>
+  `).join('');
 };
 function closeConcluidas() {
   show('#modal-concluidas', false);
@@ -240,7 +245,12 @@ function closeConcluidas() {
 $('#btnCancelarExcluir').onclick = () => show('#modalExcluir', false);
 $('#btnConfirmarExcluir').onclick = async () => {
   if (!tarefaParaExcluir) return;
-  await supabase.from('excluidos').insert([{ todo_id: tarefaParaExcluir.id, task: tarefaParaExcluir.task, contexto: tarefaParaExcluir.contexto, responsavel: tarefaParaExcluir.responsavel }]);
+  await supabase.from('excluidos').insert([{
+    todo_id:     tarefaParaExcluir.id,
+    task:        tarefaParaExcluir.task,
+    contexto:    tarefaParaExcluir.contexto,
+    responsavel: tarefaParaExcluir.responsavel
+  }]);
   await supabase.from('todos').delete().eq('id', tarefaParaExcluir.id);
   show('#modalExcluir', false);
   tarefaParaExcluir = null;
