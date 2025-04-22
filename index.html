@@ -1,10 +1,17 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-concluidas-theme="light">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Kamban Adaptado</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Override para o botão "Ver Concluídas" */
+    #btn-concluidas {
+      background: #333 !important;
+      color: #fff !important;
+    }
+  </style>
 </head>
 <body data-theme="">
   <h1>Lista de Atividades</h1>
@@ -41,11 +48,6 @@
   </form>
 
   <div class="concluidas-wrapper">
-    <label for="concluidas-theme-select">Tema Concluídas:</label>
-    <select id="concluidas-theme-select">
-      <option value="light">Claro</option>
-      <option value="dark">Escuro</option>
-    </select>
     <button id="btn-concluidas">Ver Concluídas</button>
   </div>
 
@@ -124,7 +126,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
-  <!-- Supabase client global -->
+  <!-- Supabase client -->
   <script>
     window.supabase = supabase.createClient(
       'https://pgbwgsmkngvhygwdjqng.supabase.co',
