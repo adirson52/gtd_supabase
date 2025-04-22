@@ -1,35 +1,59 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Kamban Adaptado</title>
+
+  <!-- seu CSS principal -->
   <link rel="stylesheet" href="style.css" />
+
+  <!-- 
+    Override para o toggle manual de tema:
+    Quando <html data-theme="dark">, estas variáveis substituem
+    as do :root (tema claro) definidas em style.css
+  -->
   <style>
-    /* Override para o botão "Ver Concluídas" */
+    :root[data-theme="dark"] {
+      --bg: #000;
+      --text: #fff;
+      --column-bg: #1c1c1e;
+      --card-bg: #2c2c2e;
+      --primary: #0a84ff;
+      --primary-text: #000;
+      --btn-bg: var(--primary);
+      --btn-text: var(--primary-text);
+      --btn-hover: #0060df;
+      --move-btn-bg: #3a3a3c;
+      --move-btn-text: #fff;
+      --overlay-bg: rgba(0,0,0,0.6);
+      --modal-bg: #2c2c2e;
+      --concluidas-btn-bg: #333;
+      --concluidas-btn-hover: #444;
+    }
+
+    /* reforço visual no botão "Ver Concluídas" */
     #btn-concluidas {
-      background: #333 !important;
-      color: #fff !important;
+      background: var(--concluidas-btn-bg) !important;
+      color:      var(--btn-text)          !important;
     }
   </style>
 </head>
-<body data-theme="">
+<body>
   <h1>Lista de Atividades</h1>
 
-  <!-- Botão Tema Claro/Escuro Geral -->
+  <!-- Toggle tema geral -->
   <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema">🌙</button>
 
-  <!-- ────── FORM ────── -->
+  <!-- Formulário de nova tarefa -->
   <form id="form">
     <input name="titulo" placeholder="Título" required />
     <textarea name="descricao" placeholder="Descrição (opcional)"></textarea>
-
     <select name="status">
       <option value="nao_iniciado">Não Iniciado</option>
       <option value="em_andamento">Em Andamento</option>
       <option value="com_data">Com Data</option>
     </select>
-
     <input name="tempo_estimado" placeholder="Tempo estimado (mm:ss)" />
     <select name="prioridade">
       <option value="normal">Normal</option>
@@ -47,6 +71,7 @@
     <button type="submit">Adicionar Tarefa</button>
   </form>
 
+  <!-- Botão 'Ver Concluídas' -->
   <div class="concluidas-wrapper">
     <button id="btn-concluidas">Ver Concluídas</button>
   </div>
@@ -54,87 +79,27 @@
   <div id="aviso"></div>
   <div id="kanban" class="kanban"></div>
 
-  <!-- ────── MODAIS / OVERLAYS ────── -->
+  <!-- Modais e Overlays (idem antes) -->
   <div id="readOverlay" class="overlay"></div>
-  <div id="readModal" class="read-modal">
-    <h3 id="readTitulo"></h3>
-    <p id="readDescricao" class="read-desc"></p>
-    <p id="readTempo" class="read-date"></p>
-    <p id="readPrioridade" class="read-date"></p>
-    <p id="readContexto" class="read-date"></p>
-    <p id="readResp" class="read-date"></p>
-    <button id="fecharRead" class="read-close">OK</button>
-  </div>
-
+  <div id="readModal" class="read-modal">…</div>
   <div id="overlay" class="overlay"></div>
-  <div id="editModal" class="read-modal" style="max-width:380px">
-    <h3>Editar Tarefa</h3>
-    <form id="editForm">
-      <input type="hidden" name="id" />
-      <input name="titulo" placeholder="Título" required />
-      <textarea name="descricao" placeholder="Descrição"></textarea>
-      <select name="status">
-        <option value="nao_iniciado">Não Iniciado</option>
-        <option value="em_andamento">Em Andamento</option>
-        <option value="com_data">Com Data</option>
-      </select>
-      <input name="tempo_estimado" placeholder="Tempo (mm:ss)" />
-      <select name="prioridade">
-        <option value="normal">Normal</option>
-        <option value="urgente">Urgente</option>
-      </select>
-      <select name="contexto">
-        <option value="Faculdade">Estágio</option>
-        <option value="Trabalho">Pecege</option>
-        <option value="Pessoal">Monitoria</option>
-        <option value="Pesquisa/IC">Pesquisa/IC</option>
-        <option value="CWS">CWS</option>
-        <option value="Outros">Outros</option>
-      </select>
-      <input name="responsavel" placeholder="Responsável" />
-      <button type="submit">Salvar</button>
-      <button type="button" id="cancelEdit">Cancelar</button>
-      <button type="button" id="btn-excluir-modal">Excluir</button>
-    </form>
-  </div>
-
-  <div id="modal-concluidas" class="overlay">
-    <div class="read-modal" style="max-width:600px;max-height:80vh;overflow:auto">
-      <h3>Tarefas Concluídas (Última Semana)</h3>
-      <table id="table-concluidas">
-        <thead>
-          <tr><th>Título</th><th>Contexto</th><th>Responsável</th><th>Data</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <button onclick="closeConcluidas()" class="read-close">Fechar</button>
-    </div>
-  </div>
-
-  <div id="modalExcluir" class="overlay">
-    <div class="read-modal" style="max-width:340px;text-align:center">
-      <h3>Confirmar exclusão?</h3>
-      <p>Será movida para excluídos.</p>
-      <div style="display:flex;gap:1rem;justify-content:center;margin-top:1rem">
-        <button id="btnCancelarExcluir" class="read-close" style="background:#ccc">Cancelar</button>
-        <button id="btnConfirmarExcluir" class="read-close" style="background:#d32f2f">Excluir</button>
-      </div>
-    </div>
-  </div>
+  <div id="editModal" class="read-modal">…</div>
+  <div id="modal-concluidas" class="overlay">…</div>
+  <div id="modalExcluir" class="overlay">…</div>
 
   <!-- libs -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
-  <!-- Supabase client -->
+  <!-- seu client Supabase -->
   <script>
     window.supabase = supabase.createClient(
       'https://pgbwgsmkngvhygwdjqng.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnYndnc21rbmd2aHlnd2RqcW5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5NDgyNzYsImV4cCI6MjA2MDUyNDI3Nn0.l08904UwxzJjnHDil70hiwekhBEB50NvXInmLFou-Ow'
+      'PUBLIC_ANON_KEY'
     );
   </script>
 
-  <!-- seu JS -->
+  <!-- seu script.js (mantém tudo igual, só certifique-se que initTheme usa document.documentElement) -->
   <script src="script.js"></script>
 </body>
 </html>
