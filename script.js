@@ -40,7 +40,9 @@ async function render() {
   const labels = {
     nao_iniciado: 'Não Iniciado',
     em_andamento: 'Em Andamento',
-    com_data:     'Com Data'
+    com_data:     'Com Data',
+    concluido:    'Concluído'
+   };
   };
   $('#kanban').innerHTML = Object.entries(labels)
     .map(([k, v]) => `<div class="column" data-col="${k}"><h2>${v}</h2></div>`)
