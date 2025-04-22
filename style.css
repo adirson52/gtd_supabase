@@ -1,4 +1,4 @@
-/* Variables for theming (Apple‑inspired palette) */
+/* ---------- VARIÁVEIS GLOBAIS (tema padrão “light”) ---------- */
 :root {
   --bg: #fff;
   --text: #000;
@@ -13,10 +13,13 @@
   --move-btn-text: #000;
   --overlay-bg: rgba(0,0,0,0.3);
   --modal-bg: #fff;
+
+  /* Concluídas (tema “light”) */
   --concluidas-btn-bg: #f0f0f5;
   --concluidas-btn-hover: #e5e5eb;
 }
 
+/* Tema escuro do sistema (sem afetar Concluídas) */
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #000;
@@ -32,9 +35,19 @@
     --move-btn-text: #fff;
     --overlay-bg: rgba(0,0,0,0.6);
     --modal-bg: #2c2c2e;
-    --concluidas-btn-bg: #3a3a3c;
-    --concluidas-btn-hover: #48484a;
+    /* removido: variáveis de Concluídas migradas para data-attribute */
   }
+}
+
+/* ---------- OVERRIDE PARA CONCLUÍDAS via atributo ---------- */
+:root[data-concluidas-theme="dark"] {
+  --concluidas-btn-bg: #3a3a3c;
+  --concluidas-btn-hover: #48484a;
+}
+:root[data-concluidas-theme="light"] {
+  /* mantém os valores do :root padrão */
+  --concluidas-btn-bg: #f0f0f5;
+  --concluidas-btn-hover: #e5e5eb;
 }
 
 /* ---------- GERAL ---------- */
