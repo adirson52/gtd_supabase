@@ -133,17 +133,18 @@
     <button class="close-modal primary">Fechar</button>
   </div>
 
-  <!-- SCRIPTS (ordem importa!) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    // INICIALIZAÇÃO DO SUPABASE (chave real do seu projeto)
+
+  <script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
     const supabase = supabase.createClient(
       'https://pgbwgsmkngvhygwdjqng.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnYndnc21rbmd2aHlnd2RqcW5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5NDgyNzYsImV4cCI6MjA2MDUyNDI3Nn0.l08904UwxzJjnHDil70hiwekhBEB50NvXInmLFou-Ow'
     );
-    window.supabase = supabase; // exporta para script.js
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-  <script src="script.js"></script>
+  window.supabase = supabase;
+
+  // depois de definir supabase, carregue manualmente script.js
+  import './script.js';
+</script>
 </body>
 </html>
