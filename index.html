@@ -3,21 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark"/>
   <title>Kamban Adaptado</title>
 
-  <!-- Avisa ao SO que a página suporta claro/escuro -->
-  <meta name="color-scheme" content="light dark"/>
-
-  <!-- Estilos -->
+  <!-- CSS -->
   <link rel="stylesheet" href="style.css" />
+
+  <style>
+    :root[data-theme="dark"] {
+      --bg:#000;--text:#fff;--column-bg:#1c1c1e;--card-bg:#2c2c2e;
+      --primary:#0a84ff;--primary-text:#000;--btn-bg:var(--primary);
+      --btn-text:var(--primary-text);--btn-hover:#0060df;
+      --move-btn-bg:#3a3a3c;--move-btn-text:#fff;
+      --overlay-bg:rgba(0,0,0,.6);--modal-bg:#2c2c2e;
+      --concluidas-btn-bg:#333;--concluidas-btn-hover:#444;
+    }
+    #btn-concluidas {
+      background: var(--concluidas-btn-bg) !important;
+      color: var(--btn-text) !important;
+    }
+  </style>
 </head>
 <body>
-  <h1>Lista de Atividades</h1>
 
-  <!-- Botão Tema -->
+  <h1>Lista de Atividades</h1>
   <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema">🌙</button>
 
-  <!-- ────── FORMULÁRIO NOVA TAREFA ────── -->
+  <!-- FORMULÁRIO -->
   <form id="add-task-form" autocomplete="off">
     <input name="title" placeholder="Título" required />
     <textarea name="description" placeholder="Descrição (opcional) — suporte a listas (-,*) e ~~tachado~~"></textarea>
@@ -29,7 +41,6 @@
     </select>
 
     <input name="time_est" placeholder="Tempo estimado (mm:ss)" />
-
     <select name="priority">
       <option value="normal">Normal</option>
       <option value="urgente">Urgente</option>
@@ -48,39 +59,24 @@
     <button type="submit">Adicionar Tarefa</button>
   </form>
 
-  <!-- Botão Concluídas -->
+  <!-- BOTÃO CONCLUÍDAS -->
   <div class="concluidas-wrapper">
     <button id="ver-concluidas">Ver Concluídas</button>
   </div>
 
+  <!-- KANBAN -->
   <div id="aviso" role="status" aria-live="polite"></div>
-
-  <!-- ────── QUADRO KANBAN ────── -->
-  <div id="kanban" class="kanban">
-    <section>
-      <h2>Não Iniciado</h2>
-      <div id="list-nao-iniciado" class="column"></div>
-    </section>
-    <section>
-      <h2>Em Andamento</h2>
-      <div id="list-em-andamento" class="column"></div>
-    </section>
-    <section>
-      <h2>Com Data</h2>
-      <div id="list-com-data" class="column"></div>
-    </section>
-    <section>
-      <h2>Concluído</h2>
-      <div id="list-concluido" class="column"></div>
-    </section>
+  <div id="kanban" class="kanban" aria-label="Quadro Kanban">
+    <section><h2>Não Iniciado</h2><div id="list-nao-iniciado" class="column"></div></section>
+    <section><h2>Em Andamento</h2><div id="list-em-andamento" class="column"></div></section>
+    <section><h2>Com Data</h2><div id="list-com-data" class="column"></div></section>
+    <section><h2>Concluído</h2><div id="list-concluido" class="column"></div></section>
   </div>
 
-  <!-- ────── MODAIS / OVERLAYS ────── -->
-
-  <!-- Overlay único -->
+  <!-- OVERLAY -->
   <div id="overlay" class="overlay" tabindex="-1"></div>
 
-  <!-- Modal Visualização -->
+  <!-- MODAIS (view/edit/delete/concluídas) -->
   <div id="modal-view" class="modal" role="dialog" aria-modal="true">
     <h3 class="view-title"></h3>
     <div class="view-description"></div>
@@ -92,27 +88,22 @@
     <button class="edit-btn">Editar</button>
   </div>
 
-  <!-- Modal Edição -->
   <div id="modal-edit" class="modal" style="max-width:380px" role="dialog" aria-modal="true">
     <h3>Editar Tarefa</h3>
     <form>
       <input name="title" placeholder="Título" required />
       <textarea name="description" placeholder="Descrição"></textarea>
-
       <select name="status">
         <option value="nao_iniciado">Não Iniciado</option>
         <option value="em_andamento">Em Andamento</option>
         <option value="com_data">Com Data</option>
         <option value="concluido">Concluído</option>
       </select>
-
       <input name="time_est" placeholder="Tempo (mm:ss)" />
-
       <select name="priority">
         <option value="normal">Normal</option>
         <option value="urgente">Urgente</option>
       </select>
-
       <select name="category">
         <option value="Estágio">Estágio (Faculdade)</option>
         <option value="Pecege">Pecege (Trabalho)</option>
@@ -121,7 +112,6 @@
         <option value="CWS">CWS</option>
         <option value="Outros">Outros</option>
       </select>
-
       <input name="responsavel" placeholder="Responsável" />
       <button type="submit" class="primary">Salvar</button>
       <button type="button" class="delete-btn danger">Excluir</button>
@@ -129,7 +119,6 @@
     </form>
   </div>
 
-  <!-- Modal Confirmação Exclusão -->
   <div id="modal-delete" class="modal" style="max-width:340px;text-align:center" role="dialog" aria-modal="true">
     <h3>Confirmar exclusão?</h3>
     <div class="grid2">
@@ -138,21 +127,23 @@
     </div>
   </div>
 
-  <!-- Modal Concluídas -->
   <div id="modal-concluidas" class="modal" style="max-width:600px;max-height:80vh;overflow:auto" role="dialog" aria-modal="true">
     <h3>Tarefas Concluídas</h3>
     <div class="concluded-list"></div>
     <button class="close-modal primary">Fechar</button>
   </div>
 
-  <!-- ────── SCRIPTS ────── -->
-
-  <!-- Supabase SDK -->
+  <!-- SCRIPTS (ordem importa!) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- SortableJS para drag-and-drop -->
+  <script>
+    // INICIALIZAÇÃO DO SUPABASE (chave real do seu projeto)
+    const supabase = supabase.createClient(
+      'https://pgbwgsmkngvhygwdjqng.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnYndnc21rbmd2aHlnd2RqcW5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5NDgyNzYsImV4cCI6MjA2MDUyNDI3Nn0.l08904UwxzJjnHDil70hiwekhBEB50NvXInmLFou-Ow'
+    );
+    window.supabase = supabase; // exporta para script.js
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-
-  <!-- Seu código principal (coloque suas chaves dentro dele) -->
   <script src="script.js"></script>
 </body>
 </html>
