@@ -3,31 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <meta name="color-scheme" content="light dark"/>
   <title>Kamban Adaptado</title>
 
-  <!-- CSS principal -->
-  <link rel="stylesheet" href="style.css" />
+  <!-- Sistema avisa que temos light + dark -->
+  <meta name="color-scheme" content="light dark"/>
 
-  <!-- Override rápido quando tema = dark (mantém o que você já tinha) -->
-  <style>
-    :root[data-theme="dark"]{
-      --bg:#000;--text:#fff;--column-bg:#1c1c1e;--card-bg:#2c2c2e;
-      --primary:#0a84ff;--primary-text:#000;--btn-bg:var(--primary);
-      --btn-text:var(--primary-text);--btn-hover:#0060df;
-      --move-btn-bg:#3a3a3c;--move-btn-text:#fff;
-      --overlay-bg:rgba(0,0,0,.6);--modal-bg:#2c2c2e;
-      --concluidas-btn-bg:#333;--concluidas-btn-hover:#444;
-    }
-    #btn-concluidas{background:var(--concluidas-btn-bg)!important;color:var(--btn-text)!important;}
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
   <h1>Lista de Atividades</h1>
+
   <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema">🌙</button>
 
-  <!-- ────── FORMULÁRIO ────── -->
+  <!-- ────── FORM ────── -->
   <form id="form" autocomplete="off">
     <input name="titulo" placeholder="Título" required />
     <textarea name="descricao" placeholder="Descrição (opcional) — suporte a listas (-,*) e ~~tachado~~"></textarea>
@@ -39,6 +27,7 @@
     </select>
 
     <input name="tempo_estimado" placeholder="Tempo estimado (mm:ss)" />
+
     <select name="prioridade">
       <option value="normal">Normal</option>
       <option value="urgente">Urgente</option>
@@ -57,36 +46,34 @@
     <button type="submit">Adicionar Tarefa</button>
   </form>
 
-  <!-- BOTÃO CONCLUÍDAS -->
   <div class="concluidas-wrapper">
     <button id="btn-concluidas">Ver Concluídas</button>
   </div>
 
-  <!-- QUADRO KANBAN -->
   <div id="aviso" role="status" aria-live="polite"></div>
   <div id="kanban" class="kanban" aria-label="Quadro Kanban"></div>
 
-  <!-- OVERLAY ÚNICO -->
-  <div id="readOverlay"  class="overlay"></div>
-  <div id="overlay"      class="overlay"></div>
-
-  <!-- MODAL LEITURA -->
-  <div id="readModal" class="read-modal">
+  <!-- ────── MODAIS ────── -->
+  <!-- Visualização -->
+  <div id="readOverlay" class="overlay" tabindex="-1"></div>
+  <div id="readModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="readTitulo">
     <h3 id="readTitulo"></h3>
     <div id="readDescricao" class="read-desc"></div>
-    <p id="readTempo" class="read-date"></p>
-    <p id="readPrioridade" class="read-date"></p>
-    <p id="readContexto" class="read-date"></p>
-    <p id="readResp" class="read-date"></p>
-    <button id="fecharRead" class="read-close">OK</button>
+    <p id="readTempo" class="read-meta"></p>
+    <p id="readPrioridade" class="read-meta"></p>
+    <p id="readContexto" class="read-meta"></p>
+    <p id="readResp" class="read-meta"></p>
+    <button id="fecharRead" class="primary">OK</button>
   </div>
 
-  <!-- MODAL EDIÇÃO -->
-  <div id="editModal" class="read-modal" style="max-width:380px">
+  <!-- Edição -->
+  <div id="overlay" class="overlay" tabindex="-1"></div>
+  <div id="editModal" class="modal" style="max-width:380px" role="dialog" aria-modal="true">
     <h3>Editar Tarefa</h3>
     <form id="editForm">
       <input type="hidden" name="id" />
-      <input name="titulo" placeholder="Título" required />
+
+      <input   name="titulo" placeholder="Título" required />
       <textarea name="descricao" placeholder="Descrição"></textarea>
 
       <select name="status">
@@ -96,6 +83,7 @@
       </select>
 
       <input name="tempo_estimado" placeholder="Tempo (mm:ss)" />
+
       <select name="prioridade">
         <option value="normal">Normal</option>
         <option value="urgente">Urgente</option>
@@ -111,15 +99,26 @@
       </select>
 
       <input name="responsavel" placeholder="Responsável" />
-      <button type="submit">Salvar</button>
+      <button type="submit" class="primary">Salvar</button>
       <button type="button" id="cancelEdit">Cancelar</button>
-      <button type="button" id="btn-excluir-modal">Excluir</button>
+      <button type="button" id="btn-excluir-modal" class="danger">Excluir</button>
     </form>
   </div>
 
-  <!-- MODAL CONFIRMA EXCLUSÃO -->
-  <div id="modalExcluir" class="overlay"></div>
-  <div id="excluirBox" class="read-modal" style="max-width:340px;text-align:center">
+  <!-- Concluídas -->
+  <div id="modal-concluidas" class="overlay" tabindex="-1"></div>
+  <div id="concluidasBox" class="modal" style="max-width:600px;max-height:80vh;overflow:auto" role="dialog" aria-modal="true">
+    <h3>Tarefas Concluídas (Última Semana)</h3>
+    <table id="table-concluidas">
+      <thead><tr><th>Título</th><th>Contexto</th><th>Responsável</th><th>Data</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <button id="closeConcluidas" class="primary">Fechar</button>
+  </div>
+
+  <!-- Exclusão -->
+  <div id="modalExcluir" class="overlay" tabindex="-1"></div>
+  <div id="excluirBox" class="modal" style="max-width:340px;text-align:center" role="dialog" aria-modal="true">
     <h3>Confirmar exclusão?</h3>
     <p>Será movida para “excluídos”.</p>
     <div class="grid2">
@@ -128,34 +127,18 @@
     </div>
   </div>
 
-  <!-- MODAL CONCLUÍDAS -->
-  <div id="modal-concluidas" class="overlay"></div>
-  <div id="concluidasBox" class="read-modal" style="max-width:600px;max-height:80vh;overflow:auto">
-    <h3>Tarefas Concluídas (Última Semana)</h3>
-    <table id="table-concluidas">
-      <thead><tr><th>Título</th><th>Contexto</th><th>Responsável</th><th>Data</th></tr></thead>
-      <tbody></tbody>
-    </table>
-    <button id="closeConcluidas" class="read-close">Fechar</button>
-  </div>
-
-  <!-- DEPENDÊNCIAS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.39.7/dist/umd/supabase.min.js"></script>
+  <!-- libs -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
-  <!-- 1) SDK UMD da v1.39 (garante supabase global) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.39.7/dist/umd/supabase.min.js"></script>
+  <!-- Supabase (pública - testes) -->
+  <script>
+    window.supabase = supabase.createClient(
+      'https://pgbwgsmkngvhygwdjqng.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnYndnc21rbmd2aHlnd2RqcW5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5NDgyNzYsImV4cCI6MjA2MDUyNDI3Nn0.l08904UwxzJjnHDil70hiwekhBEB50NvXInmLFou-Ow'
+    );
+  </script>
 
-<!-- 2) Cria o cliente e anexa em window.supabase ANTES do script.js -->
-<script>
-  window.supabase = supabase.createClient(
-    'https://pgbwgsmkngvhygwdjqng.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnYndnc21rbmd2aHlnd2RqcW5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5NDgyNzYsImV4cCI6MjA2MDUyNDI3Nn0.l08904UwxzJjnHDil70hiwekhBEB50NvXInmLFou-Ow'
-  );
-</script>
-
-<!-- 3) Só agora vem o seu script principal -->
-<script src="script.js"></script>
-
+  <script src="script.js"></script>
 </body>
 </html>
