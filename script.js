@@ -1,426 +1,225 @@
-// DOM elements for overlay and modals
-const overlay = document.getElementById('overlay');
-const viewModal = document.getElementById('modal-view');
-const editModal = document.getElementById('modal-edit');
-const deleteModal = document.getElementById('modal-delete');
-const concludedModal = document.getElementById('modal-concluidas');
+/* ---------- UTIL ---------- */
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const show  = (sel,on=true)=>($(sel).style.display = on ? 'block' : 'none');
+const toast = msg => { $('#aviso').textContent = msg; show('#aviso'); setTimeout(()=>show('#aviso',false),3500); };
 
-// Buttons or elements that open modals
-const viewConcludedBtn = document.getElementById('ver-concluidas'); // botão "Ver Concluídas"
+const mmss2sql = v => v && /^\d{1,2}:\d{2}$/.test(v) ? '00:'+v.padStart(5,'0') : null;
+const sql2mmss = v => v ? v.slice(3) : '';
 
-// Map columns for tasks by status
-const columns = {
-    'nao_iniciado': document.getElementById('list-nao-iniciado'),
-    'em_andamento': document.getElementById('list-em-andamento'),
-    'com_data': document.getElementById('list-com-data'),
-    'concluido': document.getElementById('list-concluido')
+/* ---------- listas válidas ---------- */
+const STATUS   = ['nao_iniciado','em_andamento','com_data','concluido'];
+const CONTEXTO = ['Estágio','Pecege','Monitoria','Pesquisa/IC','CWS','Outros'];
+
+const normStatus  = s => STATUS.includes(s)   ? s : 'nao_iniciado';
+const normContext = c => CONTEXTO.includes(c) ? c : 'Outros';
+
+/* ---------- Markdown simplificado ---------- */
+const escapeHtml = x => x.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+function md(src=''){
+  src = escapeHtml(src).replace(/~~(.*?)~~/g,'<s>$1</s>');
+  return src.split(/\r?\n/).reduce((h,l)=>{
+    const m = l.match(/^\s*[-*]\s+(.*)/);
+    if(m){
+      if(!h.endsWith('</li>')) h += '<ul>';
+      return h + `<li>${m[1]}</li>`;
+    }
+    if(h.endsWith('</li>')) h += '</ul>';
+    return h + (l.trim()? `<p>${l}</p>` : '');
+  },'').replace(/<ul>(?=[^]*$)/,'<ul>');
+}
+
+/* ---------- tema ---------- */
+function setTheme(t){
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem('theme',t);
+  $('#theme-toggle').textContent = t==='dark' ? '☀️' : '🌙';
+}
+function initTheme(){
+  const stored = localStorage.getItem('theme');
+  const sys    = matchMedia('(prefers-color-scheme:dark)');
+  setTheme(stored || (sys.matches?'dark':'light'));
+  sys.addEventListener('change',e => !stored && setTheme(e.matches?'dark':'light'));
+  $('#theme-toggle').onclick = () => setTheme(document.documentElement.dataset.theme==='dark' ? 'light':'dark');
+}
+
+/* ---------- modal helpers ---------- */
+function openModal(ov,box){
+  show(ov); show(box);
+  box.querySelector('button, [href], input, textarea, select')?.focus();
+  const esc = e => { if(e.key==='Escape'){closeModal(ov,box);document.removeEventListener('keydown',esc);} };
+  document.addEventListener('keydown',esc);
+  $(ov).onclick = e => { if(e.target===e.currentTarget) closeModal(ov,box); };
+}
+function closeModal(ov,box){ show(ov,false); show(box,false); }
+
+/* ---------- render ---------- */
+let tarefas = [];
+async function render(){
+  const {data,error} = await supabase.from('todos').select('*').order('status').order('ordem');
+  if(error){
+    console.error(error);
+    $('#kanban').innerHTML = `<p style="color:red;padding:1rem">Erro: ${error.message}</p>`;
+    return;
+  }
+  tarefas = data;
+
+  const labels = {nao_iniciado:'Não Iniciado',em_andamento:'Em Andamento',com_data:'Com Data',concluido:'Concluído'};
+  $('#kanban').innerHTML = Object.entries(labels)
+     .map(([k,v])=>`<div class="column" data-col="${k}"><h2>${v}</h2></div>`).join('');
+
+  const recents = tarefas
+      .filter(t=>t.status==='concluido')
+      .sort((a,b)=>new Date(b.moved_at)-new Date(a.moved_at))
+      .slice(0,3).map(t=>t.id);
+
+  tarefas.forEach(t=>{
+    const st = normStatus(t.status);
+    if(st==='concluido' && !recents.includes(t.id)) return;
+    const col = $(`.column[data-col="${st}"]`);
+    if(!col) return;
+    col.insertAdjacentHTML('beforeend',`
+      <div class="card" data-id="${t.id}">
+        <div class="title">${t.task}</div>
+        ${t.prioridade ? `<div class="date">Prioridade: ${t.prioridade}</div>` : ''}
+        <button class="move-btn">Move</button>
+        <button class="edit-btn">Editar</button>
+      </div>`);
+  });
+
+  $$('.card').forEach(c=>{
+    const d = tarefas.find(t=>t.id===c.dataset.id);
+    c.onclick = e => { if(e.target.closest('button')) return; openRead(d); };
+    c.querySelector('.edit-btn').onclick = e => { e.stopPropagation(); openEdit(d); };
+  });
+
+  $$('.column').forEach(col=>{
+    Sortable.create(col,{
+      group:'kanban', handle:'.move-btn', animation:150, filter:'h2',
+      onEnd: async evt =>{
+        const dest = evt.to.dataset.col;
+        const cards = [...evt.to.querySelectorAll('.card')];
+        for(let i=0;i<cards.length;i++){
+          const id = cards[i].dataset.id;
+          await supabase.from('todos').update({status:dest,ordem:i,moved_at:new Date().toISOString()}).eq('id',id);
+          if(dest==='concluido'){
+            const t = tarefas.find(x=>x.id===id);
+            await supabase.from('concluded').insert([{todo_id:id,task:t.task,contexto:t.contexto,responsavel:t.responsavel}]);
+          }
+        }
+        toast('Tarefa movida!'); render();
+      }
+    });
+  });
+}
+
+/* ---------- adicionar ---------- */
+$('#form').onsubmit = async e=>{
+  e.preventDefault();
+  const f = e.target;
+  const {data:max} = await supabase.from('todos')
+        .select('ordem').eq('status',f.status.value)
+        .order('ordem',{ascending:false}).limit(1).single();
+  const nova = {
+    task: f.titulo.value,
+    descricao: f.descricao.value || null,
+    status: normStatus(f.status.value),
+    tempo_estimado: mmss2sql(f.tempo_estimado.value),
+    prioridade: f.prioridade.value,
+    contexto: normContext(f.contexto.value),
+    responsavel: f.responsavel.value,
+    ordem: (max?.ordem || 0) + 1,
+    user_id: '00000000-0000-0000-0000-000000000000'
+  };
+  const {error} = await supabase.from('todos').insert([nova]);
+  if(error){ toast('Erro ao salvar'); console.error(error); return; }
+  f.reset(); toast('Tarefa adicionada!'); render();
 };
 
-// Global state
-let tasks = [];            // lista de tarefas atuais (não concluídas)
-let currentTaskId = null;  // ID da tarefa atualmente em edição/visualização (se houver)
-
-// Utility: open modal (accepts element or selector string)
-function openModal(box, overlay) {
-    let modalElement;
-    if (typeof box === 'string') {
-        // If a selector string is provided, find the element
-        if (box.startsWith('#') || box.startsWith('.')) {
-            modalElement = document.querySelector(box);
-        } else {
-            modalElement = document.getElementById(box);
-        }
-    } else {
-        modalElement = box;
-    }
-    if (!modalElement) {
-        console.error('Modal not found:', box);
-        return;
-    }
-    modalElement.classList.add('active');
-    overlay.classList.add('active');
+/* ---------- visualizar ---------- */
+function openRead(t){
+  $('#readTitulo').textContent   = t.task;
+  $('#readDescricao').innerHTML  = md(t.descricao || '(sem descrição)');
+  $('#readTempo').textContent    = t.tempo_estimado ? 'Tempo: '+sql2mmss(t.tempo_estimado) : '';
+  $('#readPrioridade').textContent = t.prioridade ? 'Prioridade: '+t.prioridade : '';
+  $('#readContexto').textContent = 'Contexto: ' + normContext(t.contexto);
+  $('#readResp').textContent     = 'Resp: ' + (t.responsavel || '-');
+  openModal('#readOverlay','#readModal');
 }
+$('#fecharRead').onclick = ()=> closeModal('#readOverlay','#readModal');
 
-// Utility: close modal (closes specified modal or all active modals if none specified)
-function closeModal(box, overlay) {
-    if (box) {
-        let modalElement;
-        if (typeof box === 'string') {
-            if (box.startsWith('#') || box.startsWith('.')) {
-                modalElement = document.querySelector(box);
-            } else {
-                modalElement = document.getElementById(box);
-            }
-        } else {
-            modalElement = box;
-        }
-        if (modalElement) modalElement.classList.remove('active');
-    } else {
-        // No specific modal provided: close any open modals
-        document.querySelectorAll('.modal.active').forEach(modal => modal.classList.remove('active'));
-    }
-    overlay.classList.remove('active');
+/* ---------- editar ---------- */
+let tarefaParaExcluir=null;
+function openEdit(t){
+  const f = $('#editForm');
+  f.id.value           = t.id;
+  f.titulo.value       = t.task;
+  f.descricao.value    = t.descricao || '';
+  f.status.value       = normStatus(t.status);
+  f.tempo_estimado.value = sql2mmss(t.tempo_estimado);
+  f.prioridade.value   = t.prioridade || 'normal';
+  f.contexto.value     = normContext(t.contexto);
+  f.responsavel.value  = t.responsavel || '';
+  openModal('#overlay','#editModal');
+  $('#btn-excluir-modal').onclick = () => {
+    tarefaParaExcluir = t;
+    openModal('#modalExcluir','#excluirBox');
+  };
 }
+$('#cancelEdit').onclick = ()=> closeModal('#overlay','#editModal');
+$('#editForm').onsubmit = async e=>{
+  e.preventDefault();
+  const f = e.target;
+  const upd = {
+    task: f.titulo.value,
+    descricao: f.descricao.value || null,
+    status: normStatus(f.status.value),
+    tempo_estimado: mmss2sql(f.tempo_estimado.value),
+    prioridade: f.prioridade.value,
+    contexto: normContext(f.contexto.value),
+    responsavel: f.responsavel.value
+  };
+  const {error}=await supabase.from('todos').update(upd).eq('id',f.id.value);
+  if(error){ toast('Erro ao atualizar'); console.error(error); return; }
+  closeModal('#overlay','#editModal'); toast('Tarefa atualizada!'); render();
+};
 
-// Event listeners for closing modals via overlay click or ESC key
-overlay.addEventListener('click', () => {
-    closeModal(null, overlay);
-    currentTaskId = null;
-});
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        closeModal(null, overlay);
-        currentTaskId = null;
-    }
-});
+/* ---------- excluir ---------- */
+$('#btnCancelarExcluir').onclick = ()=> closeModal('#modalExcluir','#excluirBox');
+$('#btnConfirmarExcluir').onclick = async()=>{
+  if(!tarefaParaExcluir) return;
+  await supabase.from('excluidos').insert([{
+    todo_id:tarefaParaExcluir.id,task:tarefaParaExcluir.task,
+    contexto: normContext(tarefaParaExcluir.contexto),responsavel:tarefaParaExcluir.responsavel
+  }]);
+  await supabase.from('todos').delete().eq('id',tarefaParaExcluir.id);
+  closeModal('#modalExcluir','#excluirBox'); tarefaParaExcluir=null;
+  toast('Tarefa excluída!'); render();
+};
 
-// Initialize tasks from Supabase (excluding concluded tasks)
-async function loadTasks() {
-    const { data, error } = await supabase
-        .from('tasks')
-        .select('*')
-        .neq('status', 'concluido');
-    if (error) {
-        console.error('Erro ao carregar tarefas:', error);
-        return;
-    }
-    tasks = data || [];
-    // Clear existing tasks in each column
-    for (const status in columns) {
-        columns[status].innerHTML = '';
-    }
-    // Create and append a card for each task
-    tasks.forEach(task => {
-        const card = createTaskCard(task);
-        columns[task.status]?.appendChild(card);
-    });
-}
+/* ---------- concluídas ---------- */
+$('#btn-concluidas').onclick = async ()=>{
+  openModal('#modal-concluidas','#concluidasBox');
+  $('#table-concluidas tbody').innerHTML = '<tr><td colspan="4">Carregando…</td></tr>';
+  const since = new Date(Date.now()-7*864e5).toISOString();
+  const {data,error} = await supabase.from('concluded').select('*').gte('concluded_at',since).order('concluded_at',{ascending:false});
+  if(error){
+    $('#table-concluidas tbody').innerHTML = `<tr><td colspan="4" style="color:red">${error.message}</td></tr>`;
+    return;
+  }
+  if(!data.length){
+    $('#table-concluidas tbody').innerHTML = '<tr><td colspan="4">Nenhuma tarefa concluída na última semana.</td></tr>';
+    return;
+  }
+  $('#table-concluidas tbody').innerHTML = data.map(r=>`
+      <tr>
+        <td>${r.task}</td>
+        <td>${normContext(r.contexto)}</td>
+        <td>${r.responsavel||''}</td>
+        <td>${new Date(r.concluded_at).toLocaleString()}</td>
+      </tr>`).join('');
+};
+$('#closeConcluidas').onclick = ()=> closeModal('#modal-concluidas','#concluidasBox');
 
-// Create a DOM card element for a task
-function createTaskCard(task) {
-    const card = document.createElement('div');
-    card.classList.add('card');
-    card.setAttribute('draggable', 'true');
-    card.id = 'task-' + task.id;
-    // Card content (title, etc.)
-    const titleEl = document.createElement('p');
-    titleEl.classList.add('card-title');
-    titleEl.textContent = task.title;
-    card.appendChild(titleEl);
-    // Drag events for the card
-    card.addEventListener('dragstart', e => {
-        e.dataTransfer.setData('text/plain', task.id);
-    });
-    // Double-click to open view modal for this task
-    card.addEventListener('dblclick', () => {
-        openTaskView(task.id);
-    });
-    return card;
-}
-
-// Open the view/details modal for a task
-function openTaskView(taskId) {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-    currentTaskId = taskId;
-    // Populate view modal fields
-    const viewTitle = viewModal.querySelector('.view-title');
-    const viewDescription = viewModal.querySelector('.view-description');
-    const viewStatus = viewModal.querySelector('.view-status');
-    const viewTime = viewModal.querySelector('.view-time');
-    const viewPriority = viewModal.querySelector('.view-priority');
-    const viewCategory = viewModal.querySelector('.view-category');
-    if (viewTitle) viewTitle.textContent = task.title;
-    if (viewDescription) {
-        // If description supports markdown formatting, parse/format here as needed
-        viewDescription.innerHTML = task.description || '';
-    }
-    if (viewStatus) viewStatus.textContent = task.status;
-    if (viewTime) viewTime.textContent = task.time_est || '';
-    if (viewPriority) viewPriority.textContent = task.priority || '';
-    if (viewCategory) viewCategory.textContent = task.category || '';
-    openModal(viewModal, overlay);
-}
-
-// If view modal has an Edit button, link it to open edit modal
-const viewEditBtn = viewModal.querySelector('.edit-btn');
-if (viewEditBtn) {
-    viewEditBtn.addEventListener('click', () => {
-        closeModal(viewModal, overlay);
-        if (currentTaskId != null) {
-            openTaskEdit(currentTaskId);
-        }
-    });
-}
-
-// Open the edit modal for a task (populate form fields)
-function openTaskEdit(taskId) {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-    currentTaskId = taskId;
-    // Populate edit form fields
-    const editTitle = editModal.querySelector('input[name="title"]');
-    const editDescription = editModal.querySelector('textarea[name="description"]');
-    const editStatus = editModal.querySelector('select[name="status"]');
-    const editTime = editModal.querySelector('input[name="time_est"]');
-    const editPriority = editModal.querySelector('select[name="priority"]');
-    const editCategory = editModal.querySelector('select[name="category"]');
-    if (editTitle) editTitle.value = task.title;
-    if (editDescription) editDescription.value = task.description || '';
-    if (editStatus) editStatus.value = task.status;
-    if (editTime) editTime.value = task.time_est || '';
-    if (editPriority) editPriority.value = task.priority || '';
-    if (editCategory) editCategory.value = task.category || '';
-    openModal(editModal, overlay);
-}
-
-// Handle edit form submission (update task)
-const editForm = editModal.querySelector('form');
-if (editForm) {
-    editForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (currentTaskId == null) return;
-        // Gather updated values
-        const updatedTask = {};
-        const titleInput = editForm.querySelector('input[name="title"]');
-        const descInput = editForm.querySelector('textarea[name="description"]');
-        const statusInput = editForm.querySelector('select[name="status"]');
-        const timeInput = editForm.querySelector('input[name="time_est"]');
-        const priorityInput = editForm.querySelector('select[name="priority"]');
-        const categoryInput = editForm.querySelector('select[name="category"]');
-        if (titleInput) updatedTask.title = titleInput.value;
-        if (descInput) updatedTask.description = descInput.value;
-        updatedTask.status = statusInput ? statusInput.value : undefined;
-        if (timeInput) updatedTask.time_est = timeInput.value;
-        if (priorityInput) updatedTask.priority = priorityInput.value;
-        if (categoryInput) updatedTask.category = categoryInput.value;
-        const newStatus = updatedTask.status;
-        const oldTask = tasks.find(t => t.id === currentTaskId);
-        const oldStatus = oldTask ? oldTask.status : null;
-        let movedToConcluded = (newStatus === 'concluido');
-        // Update database
-        let updateError = null;
-        if (!movedToConcluded) {
-            // Just update in tasks table
-            const { error } = await supabase.from('tasks').update(updatedTask).eq('id', currentTaskId);
-            updateError = error;
-        } else {
-            // Insert into concluded table if concluded
-            const { error: insertError } = await supabase.from('concluded').insert({
-                title: updatedTask.title,
-                description: updatedTask.description,
-                status: 'concluido',
-                time_est: updatedTask.time_est,
-                priority: updatedTask.priority,
-                category: updatedTask.category
-            });
-            if (insertError) {
-                console.error('Erro ao inserir tarefa concluída:', insertError);
-            }
-            // Update the task in tasks table (mark as concluded and save other changes)
-            const { error: updError } = await supabase.from('tasks').update(updatedTask).eq('id', currentTaskId);
-            updateError = updError;
-        }
-        if (updateError) {
-            console.error('Erro ao atualizar tarefa:', updateError);
-        } else {
-            if (oldTask) {
-                if (movedToConcluded) {
-                    // Remove concluded task from active list
-                    tasks = tasks.filter(t => t.id !== currentTaskId);
-                    const cardEl = document.getElementById('task-' + currentTaskId);
-                    if (cardEl) cardEl.remove();
-                } else {
-                    // Update local task object
-                    Object.assign(oldTask, updatedTask);
-                    // If status changed (to another active status), move card in UI
-                    if (oldStatus && newStatus && oldStatus !== newStatus) {
-                        const cardEl = document.getElementById('task-' + currentTaskId);
-                        if (cardEl && columns[newStatus]) {
-                            columns[oldStatus].removeChild(cardEl);
-                            columns[newStatus].appendChild(cardEl);
-                        }
-                    }
-                    // Update card content if needed (e.g., title change)
-                    const cardEl = document.getElementById('task-' + currentTaskId);
-                    if (cardEl) {
-                        const titleEl = cardEl.querySelector('.card-title');
-                        if (titleEl) titleEl.textContent = oldTask.title;
-                    }
-                }
-            }
-            closeModal(editModal, overlay);
-            currentTaskId = null;
-        }
-    });
-}
-
-// Delete button in edit modal opens confirmation modal
-const editDeleteBtn = editModal.querySelector('.delete-btn');
-if (editDeleteBtn) {
-    editDeleteBtn.addEventListener('click', () => {
-        if (currentTaskId != null) {
-            // (Optional: set some confirmation text using the task info if needed)
-        }
-        // Close edit modal and open delete confirmation modal
-        closeModal(editModal, overlay);
-        openModal(deleteModal, overlay);
-    });
-}
-
-// Confirm deletion in confirmation modal
-const confirmDeleteBtn = deleteModal.querySelector('.confirm-delete-btn');
-if (confirmDeleteBtn) {
-    confirmDeleteBtn.addEventListener('click', async () => {
-        if (currentTaskId == null) return;
-        const idToDelete = currentTaskId;
-        const { error } = await supabase.from('tasks').delete().eq('id', idToDelete);
-        if (error) {
-            console.error('Erro ao deletar tarefa:', error);
-        } else {
-            // Remove from local list and UI
-            tasks = tasks.filter(t => t.id !== idToDelete);
-            const cardEl = document.getElementById('task-' + idToDelete);
-            if (cardEl) cardEl.remove();
-        }
-        closeModal(deleteModal, overlay);
-        currentTaskId = null;
-    });
-}
-
-// Cancel deletion (close confirmation modal without deleting)
-const cancelDeleteBtn = deleteModal.querySelector('.cancel-delete-btn');
-if (cancelDeleteBtn) {
-    cancelDeleteBtn.addEventListener('click', () => {
-        closeModal(deleteModal, overlay);
-        currentTaskId = null;
-    });
-}
-
-// Add task form submission (adicionar nova tarefa)
-const addForm = document.getElementById('add-task-form');
-if (addForm) {
-    addForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const newTask = {};
-        const titleInput = addForm.querySelector('input[name="title"]');
-        const descInput = addForm.querySelector('textarea[name="description"]');
-        const statusInput = addForm.querySelector('select[name="status"]');
-        const timeInput = addForm.querySelector('input[name="time_est"]');
-        const priorityInput = addForm.querySelector('select[name="priority"]');
-        const categoryInput = addForm.querySelector('select[name="category"]');
-        const respInput = addForm.querySelector('input[name="responsavel"]');
-        if (titleInput) newTask.title = titleInput.value;
-        if (descInput) newTask.description = descInput.value;
-        newTask.status = statusInput ? statusInput.value : 'nao_iniciado';
-        if (timeInput) newTask.time_est = timeInput.value;
-        if (priorityInput) newTask.priority = priorityInput.value;
-        if (categoryInput) newTask.category = categoryInput.value;
-        if (respInput) newTask.responsavel = respInput.value;
-        const { data: inserted, error: insertError } = await supabase.from('tasks')
-            .insert(newTask)
-            .select('*')
-            .single();
-        if (insertError) {
-            console.error('Erro ao adicionar tarefa:', insertError);
-        } else if (inserted) {
-            tasks.push(inserted);
-            const card = createTaskCard(inserted);
-            columns[inserted.status]?.appendChild(card);
-            addForm.reset();
-        }
-    });
-}
-
-// View concluded tasks modal (lista de concluídas)
-if (viewConcludedBtn) {
-    viewConcludedBtn.addEventListener('click', async () => {
-        const { data: concludedTasks, error } = await supabase.from('concluded').select('*');
-        if (error) {
-            console.error('Erro ao buscar concluídas:', error);
-            return;
-        }
-        const concludedList = concludedModal.querySelector('.concluded-list');
-        if (concludedList) {
-            concludedList.innerHTML = '';
-            if (concludedTasks && concludedTasks.length > 0) {
-                concludedTasks.forEach(task => {
-                    const item = document.createElement('div');
-                    item.classList.add('concluded-item');
-                    item.innerHTML = '<strong>' + task.title + '</strong>' + (task.description ? ' - ' + task.description : '');
-                    concludedList.appendChild(item);
-                });
-            } else {
-                concludedList.textContent = 'Nenhuma tarefa concluída.';
-            }
-        }
-        openModal(concludedModal, overlay);
-    });
-}
-
-// Drag-and-drop for moving tasks between columns
-for (const status in columns) {
-    const col = columns[status];
-    // Allow drop on column
-    col.addEventListener('dragover', e => {
-        e.preventDefault();
-    });
-    col.addEventListener('drop', async e => {
-        e.preventDefault();
-        const id = e.dataTransfer.getData('text/plain');
-        if (!id) return;
-        const taskId = parseInt(id);
-        const targetStatus = status;
-        if (!taskId || !targetStatus) return;
-        const task = tasks.find(t => t.id === taskId);
-        if (!task) return;
-        const oldStatus = task.status;
-        if (oldStatus === targetStatus) return; // no status change
-        // Move card element in DOM
-        const cardEl = document.getElementById('task-' + taskId);
-        if (cardEl) {
-            columns[oldStatus].removeChild(cardEl);
-            columns[targetStatus].appendChild(cardEl);
-        }
-        // Update local data
-        task.status = targetStatus;
-        // Update in database
-        if (targetStatus === 'concluido') {
-            const { error: insertErr } = await supabase.from('concluded').insert({
-                title: task.title,
-                description: task.description,
-                status: 'concluido',
-                time_est: task.time_est,
-                priority: task.priority,
-                category: task.category
-            });
-            if (insertErr) {
-                console.error('Erro ao inserir em concluídas:', insertErr);
-            }
-            const { error: updateErr } = await supabase.from('tasks').update({ status: 'concluido' }).eq('id', taskId);
-            if (updateErr) {
-                console.error('Erro ao atualizar tarefa:', updateErr);
-            }
-            // Remove from active list and UI
-            tasks = tasks.filter(t => t.id !== taskId);
-            if (cardEl) cardEl.remove();
-        } else {
-            const { error: updateErr } = await supabase.from('tasks').update({ status: targetStatus }).eq('id', taskId);
-            if (updateErr) {
-                console.error('Erro ao mover tarefa:', updateErr);
-            }
-        }
-    });
-}
-
-// Load initial tasks on page load
-loadTasks();
-
-// Attach close handlers for any modal close buttons (elements with class .close-modal)
-document.querySelectorAll('.close-modal').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const modal = btn.closest('.modal');
-        closeModal(modal, overlay);
-        currentTaskId = null;
-    });
-});
+/* ---------- start ---------- */
+document.addEventListener('DOMContentLoaded',()=>{ initTheme(); render(); });
