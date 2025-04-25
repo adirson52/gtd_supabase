@@ -5,38 +5,29 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Kamban Adaptado</title>
 
-  <!-- seu CSS principal -->
+  <!-- CSS principal -->
   <link rel="stylesheet" href="style.css" />
 
   <!-- Override para toggle de tema e botão Concluídas -->
   <style>
     :root[data-theme="dark"] {
-      --bg: #000;
-      --text: #fff;
-      --column-bg: #1c1c1e;
-      --card-bg: #2c2c2e;
-      --primary: #0a84ff;
-      --primary-text: #000;
-      --btn-bg: var(--primary);
-      --btn-text: var(--primary-text);
-      --btn-hover: #0060df;
-      --move-btn-bg: #3a3a3c;
-      --move-btn-text: #fff;
-      --overlay-bg: rgba(0,0,0,0.6);
-      --modal-bg: #2c2c2e;
-      --concluidas-btn-bg: #333;
-      --concluidas-btn-hover: #444;
+      --bg:#000;--text:#fff;--column-bg:#1c1c1e;--card-bg:#2c2c2e;
+      --primary:#0a84ff;--primary-text:#000;--btn-bg:var(--primary);
+      --btn-text:var(--primary-text);--btn-hover:#0060df;
+      --move-btn-bg:#3a3a3c;--move-btn-text:#fff;
+      --overlay-bg:rgba(0,0,0,.6);--modal-bg:#2c2c2e;
+      --concluidas-btn-bg:#333;--concluidas-btn-hover:#444;
     }
-    #btn-concluidas {
-      background: var(--concluidas-btn-bg) !important;
-      color:      var(--btn-text)          !important;
+    #btn-concluidas{
+      background:var(--concluidas-btn-bg)!important;
+      color:var(--btn-text)!important;
     }
   </style>
 </head>
 <body>
   <h1>Lista de Atividades</h1>
 
-  <!-- Toggle tema geral -->
+  <!-- Toggle tema -->
   <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema">🌙</button>
 
   <!-- ────── FORM ────── -->
@@ -77,7 +68,7 @@
   <div id="readOverlay" class="overlay"></div>
   <div id="readModal" class="read-modal">
     <h3 id="readTitulo"></h3>
-    <p id="readDescricao" class="read-desc"></p>
+    <div id="readDescricao" class="read-desc"></div>
     <p id="readTempo" class="read-date"></p>
     <p id="readPrioridade" class="read-date"></p>
     <p id="readContexto" class="read-date"></p>
@@ -121,9 +112,7 @@
     <div class="read-modal" style="max-width:600px;max-height:80vh;overflow:auto">
       <h3>Tarefas Concluídas (Última Semana)</h3>
       <table id="table-concluidas">
-        <thead>
-          <tr><th>Título</th><th>Contexto</th><th>Responsável</th><th>Data</th></tr>
-        </thead>
+        <thead><tr><th>Título</th><th>Contexto</th><th>Responsável</th><th>Data</th></tr></thead>
         <tbody></tbody>
       </table>
       <button onclick="closeConcluidas()" class="read-close">Fechar</button>
@@ -153,7 +142,7 @@
     );
   </script>
 
-  <!-- seu script.js -->
+  <!-- script principal -->
   <script src="script.js"></script>
 </body>
 </html>
