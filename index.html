@@ -5,20 +5,22 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Kamban Adaptado</title>
 
-  <!-- Sistema avisa que temos light + dark -->
+  <!-- Avisa ao SO que a página suporta claro/escuro -->
   <meta name="color-scheme" content="light dark"/>
 
+  <!-- Estilos -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <h1>Lista de Atividades</h1>
 
+  <!-- Botão Tema -->
   <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema">🌙</button>
 
-  <!-- ────── FORM ────── -->
-  <form id="form" autocomplete="off">
-    <input name="titulo" placeholder="Título" required />
-    <textarea name="descricao" placeholder="Descrição (opcional) — suporte a listas (-,*) e ~~tachado~~"></textarea>
+  <!-- ────── FORMULÁRIO NOVA TAREFA ────── -->
+  <form id="add-task-form" autocomplete="off">
+    <input name="title" placeholder="Título" required />
+    <textarea name="description" placeholder="Descrição (opcional) — suporte a listas (-,*) e ~~tachado~~"></textarea>
 
     <select name="status">
       <option value="nao_iniciado">Não Iniciado</option>
@@ -26,14 +28,14 @@
       <option value="com_data">Com Data</option>
     </select>
 
-    <input name="tempo_estimado" placeholder="Tempo estimado (mm:ss)" />
+    <input name="time_est" placeholder="Tempo estimado (mm:ss)" />
 
-    <select name="prioridade">
+    <select name="priority">
       <option value="normal">Normal</option>
       <option value="urgente">Urgente</option>
     </select>
 
-    <select name="contexto">
+    <select name="category">
       <option value="Estágio">Estágio (Faculdade)</option>
       <option value="Pecege">Pecege (Trabalho)</option>
       <option value="Monitoria">Monitoria (Pessoal)</option>
@@ -46,50 +48,72 @@
     <button type="submit">Adicionar Tarefa</button>
   </form>
 
+  <!-- Botão Concluídas -->
   <div class="concluidas-wrapper">
-    <button id="btn-concluidas">Ver Concluídas</button>
+    <button id="ver-concluidas">Ver Concluídas</button>
   </div>
 
   <div id="aviso" role="status" aria-live="polite"></div>
-  <div id="kanban" class="kanban" aria-label="Quadro Kanban"></div>
 
-  <!-- ────── MODAIS ────── -->
-  <!-- Visualização -->
-  <div id="readOverlay" class="overlay" tabindex="-1"></div>
-  <div id="readModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="readTitulo">
-    <h3 id="readTitulo"></h3>
-    <div id="readDescricao" class="read-desc"></div>
-    <p id="readTempo" class="read-meta"></p>
-    <p id="readPrioridade" class="read-meta"></p>
-    <p id="readContexto" class="read-meta"></p>
-    <p id="readResp" class="read-meta"></p>
-    <button id="fecharRead" class="primary">OK</button>
+  <!-- ────── QUADRO KANBAN ────── -->
+  <div id="kanban" class="kanban">
+    <section>
+      <h2>Não Iniciado</h2>
+      <div id="list-nao-iniciado" class="column"></div>
+    </section>
+    <section>
+      <h2>Em Andamento</h2>
+      <div id="list-em-andamento" class="column"></div>
+    </section>
+    <section>
+      <h2>Com Data</h2>
+      <div id="list-com-data" class="column"></div>
+    </section>
+    <section>
+      <h2>Concluído</h2>
+      <div id="list-concluido" class="column"></div>
+    </section>
   </div>
 
-  <!-- Edição -->
-  <div id="overlay" class="overlay" tabindex="-1"></div>
-  <div id="editModal" class="modal" style="max-width:380px" role="dialog" aria-modal="true">
-    <h3>Editar Tarefa</h3>
-    <form id="editForm">
-      <input type="hidden" name="id" />
+  <!-- ────── MODAIS / OVERLAYS ────── -->
 
-      <input   name="titulo" placeholder="Título" required />
-      <textarea name="descricao" placeholder="Descrição"></textarea>
+  <!-- Overlay único -->
+  <div id="overlay" class="overlay" tabindex="-1"></div>
+
+  <!-- Modal Visualização -->
+  <div id="modal-view" class="modal" role="dialog" aria-modal="true">
+    <h3 class="view-title"></h3>
+    <div class="view-description"></div>
+    <p class="view-status read-meta"></p>
+    <p class="view-time read-meta"></p>
+    <p class="view-priority read-meta"></p>
+    <p class="view-category read-meta"></p>
+    <button class="close-modal primary">OK</button>
+    <button class="edit-btn">Editar</button>
+  </div>
+
+  <!-- Modal Edição -->
+  <div id="modal-edit" class="modal" style="max-width:380px" role="dialog" aria-modal="true">
+    <h3>Editar Tarefa</h3>
+    <form>
+      <input name="title" placeholder="Título" required />
+      <textarea name="description" placeholder="Descrição"></textarea>
 
       <select name="status">
         <option value="nao_iniciado">Não Iniciado</option>
         <option value="em_andamento">Em Andamento</option>
         <option value="com_data">Com Data</option>
+        <option value="concluido">Concluído</option>
       </select>
 
-      <input name="tempo_estimado" placeholder="Tempo (mm:ss)" />
+      <input name="time_est" placeholder="Tempo (mm:ss)" />
 
-      <select name="prioridade">
+      <select name="priority">
         <option value="normal">Normal</option>
         <option value="urgente">Urgente</option>
       </select>
 
-      <select name="contexto">
+      <select name="category">
         <option value="Estágio">Estágio (Faculdade)</option>
         <option value="Pecege">Pecege (Trabalho)</option>
         <option value="Monitoria">Monitoria (Pessoal)</option>
@@ -100,45 +124,35 @@
 
       <input name="responsavel" placeholder="Responsável" />
       <button type="submit" class="primary">Salvar</button>
-      <button type="button" id="cancelEdit">Cancelar</button>
-      <button type="button" id="btn-excluir-modal" class="danger">Excluir</button>
+      <button type="button" class="delete-btn danger">Excluir</button>
+      <button type="button" class="close-modal">Cancelar</button>
     </form>
   </div>
 
-  <!-- Concluídas -->
-  <div id="modal-concluidas" class="overlay" tabindex="-1"></div>
-  <div id="concluidasBox" class="modal" style="max-width:600px;max-height:80vh;overflow:auto" role="dialog" aria-modal="true">
-    <h3>Tarefas Concluídas (Última Semana)</h3>
-    <table id="table-concluidas">
-      <thead><tr><th>Título</th><th>Contexto</th><th>Responsável</th><th>Data</th></tr></thead>
-      <tbody></tbody>
-    </table>
-    <button id="closeConcluidas" class="primary">Fechar</button>
-  </div>
-
-  <!-- Exclusão -->
-  <div id="modalExcluir" class="overlay" tabindex="-1"></div>
-  <div id="excluirBox" class="modal" style="max-width:340px;text-align:center" role="dialog" aria-modal="true">
+  <!-- Modal Confirmação Exclusão -->
+  <div id="modal-delete" class="modal" style="max-width:340px;text-align:center" role="dialog" aria-modal="true">
     <h3>Confirmar exclusão?</h3>
-    <p>Será movida para “excluídos”.</p>
     <div class="grid2">
-      <button id="btnCancelarExcluir">Cancelar</button>
-      <button id="btnConfirmarExcluir" class="danger">Excluir</button>
+      <button class="confirm-delete-btn danger">Excluir</button>
+      <button class="cancel-delete-btn">Cancelar</button>
     </div>
   </div>
 
-  <!-- libs -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <!-- Modal Concluídas -->
+  <div id="modal-concluidas" class="modal" style="max-width:600px;max-height:80vh;overflow:auto" role="dialog" aria-modal="true">
+    <h3>Tarefas Concluídas</h3>
+    <div class="concluded-list"></div>
+    <button class="close-modal primary">Fechar</button>
+  </div>
+
+  <!-- ────── SCRIPTS ────── -->
+
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- SortableJS para drag-and-drop -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
-  <!-- Supabase (pública - testes) -->
-  <script>
-    window.supabase = supabase.createClient(
-      'https://pgbwgsmkngvhygwdjqng.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnYndnc21rbmd2aHlnd2RqcW5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5NDgyNzYsImV4cCI6MjA2MDUyNDI3Nn0.l08904UwxzJjnHDil70hiwekhBEB50NvXInmLFou-Ow'
-    );
-  </script>
-
+  <!-- Seu código principal (coloque suas chaves dentro dele) -->
   <script src="script.js"></script>
 </body>
 </html>
