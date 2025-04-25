@@ -1,5 +1,5 @@
 // Supabase client initialization (substitua pelas credenciais do seu projeto Supabase)
-const supabaseUrl = 'https://pgbwgsmkngvhygwdjqng.supabase.co'';
+const supabaseUrl = 'https://pgbwgsmkngvhygwdjqng.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnYndnc21rbmd2aHlnd2RqcW5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5NDgyNzYsImV4cCI6MjA2MDUyNDI3Nn0.l08904UwxzJjnHDil70hiwekhBEB50NvXInmLFou-Ow';
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
