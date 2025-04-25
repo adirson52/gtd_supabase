@@ -143,15 +143,19 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.39.7/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
-  <!-- CRIA CLIENTE E DEIXA GLOBAL -->
-  <script>
-    window.supabase = supabase.createClient(
-      'https://pgbwgsmkngvhygwdjqng.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnYndnc21rbmd2aHlnd2RqcW5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5NDgyNzYsImV4cCI6MjA2MDUyNDI3Nn0.l08904UwxzJjnHDil70hiwekhBEB50NvXInmLFou-Ow'
-    );
-  </script>
+  <!-- 1) SDK UMD da v1.39 (garante supabase global) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.39.7/dist/umd/supabase.min.js"></script>
 
-  <!-- JS principal -->
-  <script src="script.js"></script>
+<!-- 2) Cria o cliente e anexa em window.supabase ANTES do script.js -->
+<script>
+  window.supabase = supabase.createClient(
+    'https://pgbwgsmkngvhygwdjqng.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnYndnc21rbmd2aHlnd2RqcW5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5NDgyNzYsImV4cCI6MjA2MDUyNDI3Nn0.l08904UwxzJjnHDil70hiwekhBEB50NvXInmLFou-Ow'
+  );
+</script>
+
+<!-- 3) Só agora vem o seu script principal -->
+<script src="script.js"></script>
+
 </body>
 </html>
