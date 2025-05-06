@@ -97,6 +97,7 @@ async function render() {
       <div class="card" data-id="${t.id}">
         <div class="title">${t.task}</div>
         ${t.prioridade ? `<div class="date">Prioridade: ${t.prioridade}</div>` : ''}
+        ${t.responsavel ? `<div class="resp">Resp: ${t.responsavel}</div>` : ''}
         <button class="move-btn">Move</button>
         <button class="edit-btn">Editar</button>
       </div>
